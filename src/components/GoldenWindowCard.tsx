@@ -1,133 +1,89 @@
 import { motion } from "framer-motion";
-import type { GoldenWindow } from "@/data/mockData";
-import { Sparkles, Calendar, Users, ArrowRight } from "lucide-react";
+import type { GoldenWindow } from "@/types";
+import { Zap, ArrowRight } from "lucide-react";
 
 interface GoldenWindowCardProps {
   window: GoldenWindow;
   index: number;
+  totalMembers: number;
   featured?: boolean;
 }
 
-const GoldenWindowCard = ({ window: gw, index, featured }: GoldenWindowCardProps) => {
-  const isGolden = gw.tags.includes("Golden Window");
+const GoldenWindowCard = ({ window: gw, index, totalMembers, featured }: GoldenWindowCardProps) => {
+  const freeCount = gw.freeMembers.length;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay: index * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={`relative group ${featured ? "col-span-full" : ""}`}
+      viewport={{ once: true }}
+      className={`group relative p-10 rounded-[3rem] transition-all duration-700 bg-white/5 border border-white/10 hover:border-primary/40 flex flex-col justify-between min-h-[500px] shadow-2xl backdrop-blur-md overflow-hidden ${featured ? "ring-2 ring-primary/40 shadow-primary/10" : "hover:bg-white/[0.07]"}`}
     >
-      <div
-        className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-500 ${
-          isGolden
-            ? "glass border-accent/30 glow-accent-subtle hover:glow-accent"
-            : "glass hover:border-primary/30"
-        } ${featured ? "p-8" : ""}`}
-      >
-        {/* Match strength bar */}
-        <div className="absolute top-0 left-0 h-1 rounded-t-2xl transition-all duration-500"
-          style={{
-            width: `${gw.matchStrength}%`,
-            background: isGolden
-              ? `linear-gradient(90deg, hsl(var(--accent)), hsl(var(--accent) / 0.5))`
-              : `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.5))`,
-          }}
-        />
+      {/* Background Accent */}
+      {featured && (
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full -translate-y-12 translate-x-12" />
+      )}
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              {isGolden && <Sparkles className="w-4 h-4 text-accent" />}
-              <span className={`text-sm font-body font-semibold tracking-wide uppercase ${
-                isGolden ? "text-accent" : "text-primary"
-              }`}>
-                {gw.tags[0]}
-              </span>
+      <div className="relative z-10 flex flex-col gap-10">
+        <div className="flex justify-between items-start">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${featured ? 'bg-primary glow-sunset animate-pulse' : 'bg-white/20'}`} />
+              <span className="text-social-label text-[8px] tracking-widest">{featured ? 'TOP_PICK' : `OPTION_0${index + 1}`}</span>
             </div>
-            <h3 className="font-display text-2xl font-extrabold text-foreground">
-              {gw.dateRange}
-            </h3>
-            <span className="text-sm text-muted-foreground font-body">{gw.dates}</span>
+            <div className={`px-4 py-1.5 rounded-full inline-block border text-[10px] font-bold tracking-wider ${featured ? 'bg-primary border-primary text-black' : 'bg-white/5 border-white/10 text-white/60'}`}>
+              {gw.matchStrength}% SYNC
+            </div>
           </div>
-          <div className={`flex items-center justify-center w-14 h-14 rounded-xl font-display font-extrabold text-lg ${
-            isGolden ? "bg-accent/15 text-accent" : "bg-primary/15 text-primary"
-          }`}>
-            {gw.matchStrength}%
-          </div>
-        </div>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {gw.tags.slice(1).map((tag) => (
-            <span
-              key={tag}
-              className={`px-2.5 py-1 rounded-lg text-xs font-body font-semibold ${
-                tag.includes("Luxembourg") || tag.includes("Boost")
-                  ? "bg-accent/10 text-accent"
-                  : tag.includes("Leave")
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {tag}
-            </span>
-          ))}
           {gw.holidayBoost && (
-            <span className="px-2.5 py-1 rounded-lg text-xs font-body font-semibold bg-accent/10 text-accent">
-              {gw.holidayBoost}
-            </span>
-          )}
-          {gw.leaveDays !== undefined && gw.leaveDays > 0 && (
-            <span className="px-2.5 py-1 rounded-lg text-xs font-body font-semibold bg-primary/10 text-primary">
-              {gw.leaveDays} Leave Day{gw.leaveDays > 1 ? "s" : ""}
-            </span>
+            <div className="bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 text-primary max-w-[140px]">
+              <Zap className="w-3 h-3 fill-current flex-shrink-0" />
+              <span className="text-[9px] font-bold tracking-wider truncate uppercase">{gw.holidayBoost}</span>
+            </div>
           )}
         </div>
 
-        {/* Squad status */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex -space-x-2">
-            {gw.freeMembers.map((m) => (
-              <div
-                key={m}
-                className="w-8 h-8 rounded-full bg-accent/20 border-2 border-background flex items-center justify-center text-xs font-body font-bold text-accent"
-              >
-                {m[0]}
-              </div>
-            ))}
-            {gw.maybeMembers.map((m) => (
-              <div
-                key={m}
-                className="w-8 h-8 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-body font-bold text-primary"
-              >
-                {m[0]}
-              </div>
-            ))}
-          </div>
-          <div className="text-xs text-muted-foreground font-body">
-            <span className="text-accent font-semibold">{gw.freeMembers.length} free</span>
-            {gw.maybeMembers.length > 0 && (
-              <span> · <span className="text-primary">{gw.maybeMembers.length} maybe</span></span>
-            )}
-          </div>
+        <div className="space-y-3 pt-4">
+          <h3 className="text-4xl md:text-5xl font-display font-medium tracking-tight text-white group-hover:text-primary transition-colors">
+            {gw.dateRange}
+          </h3>
+          <p className="text-sm font-medium text-white/30 italic font-body lowercase">
+            {gw.dates}
+          </p>
         </div>
 
-        {/* Explanation */}
-        <p className="text-sm text-muted-foreground font-body leading-relaxed">
+        <p className="text-sm text-white/50 leading-relaxed font-body line-clamp-3">
           {gw.explanation}
         </p>
-
-        {/* CTA */}
-        <motion.div
-          className="mt-4 flex items-center gap-2 text-sm font-body font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-          whileHover={{ x: 4 }}
-        >
-          Lock this window <ArrowRight className="w-4 h-4" />
-        </motion.div>
       </div>
+
+      <div className="relative z-10 space-y-8 pt-8 border-t border-white/5 mt-auto">
+        <div className="flex justify-between items-end">
+          <div className="space-y-1">
+            <div className="text-[9px] font-bold text-white/20 tracking-widest uppercase">Available</div>
+            <div className="flex items-end gap-2">
+              <span className="text-3xl font-display font-bold text-white">{freeCount}</span>
+              <span className="text-sm text-white/30 mb-1">/ {totalMembers} friends</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] font-bold text-white/20 tracking-widest mb-1 uppercase">Leave Impact</div>
+            <div className={`text-xs font-bold ${gw.leaveDays ? 'text-amber-400' : 'text-primary'}`}>
+              {gw.leaveDays ? `${gw.leaveDays} Day Unlock` : 'No Leave Needed'}
+            </div>
+          </div>
+        </div>
+
+        <button className="button-premium w-full group py-4 flex items-center justify-center gap-3">
+          <span>Lock Weekend</span>
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+
+      {featured && (
+        <div className="absolute top-0 left-0 w-2 h-full bg-primary/20 backdrop-blur-xl" />
+      )}
     </motion.div>
   );
 };
