@@ -38,15 +38,15 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
   const totalMembers = activeCrew?.memberIds.length || 0;
 
   return (
-    <section className="py-24 md:py-48 px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
+    <section className="py-12 md:py-48 px-4 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
       {/* Soft Romantic Glows */}
       <div className="absolute top-[10%] -left-[10%] w-[60vw] h-[60vw] bg-primary/10 blur-[150px] rounded-full" />
       <div className="absolute bottom-[10%] -right-[10%] w-[50vw] h-[50vw] bg-purple-500/10 blur-[120px] rounded-full" />
 
-      <div className="max-w-7xl mx-auto space-y-32 relative z-10">
+      <div className="max-w-7xl mx-auto space-y-16 md:space-y-32 relative z-10">
 
         {/* Elegant Discovery Header */}
-        <div className="flex flex-col md:flex-row gap-20 items-end justify-between border-b border-white/10 pb-20">
+        <div className="flex flex-col md:flex-row gap-10 md:gap-20 items-end justify-between border-b border-white/10 pb-10 md:pb-20">
           <div className="space-y-8 flex-1">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -74,7 +74,7 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
           <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-6">
             <div className="text-left md:text-right">
               <div className="text-social-label mb-2 uppercase tracking-widest">Sync Confidence</div>
-              <div className="text-6xl md:text-8xl font-display font-bold text-white leading-none tracking-tighter">
+              <div className="text-5xl md:text-8xl font-display font-bold text-white leading-none tracking-tighter">
                 {hasResults ? (
                   <>Over <span className="text-primary italic">{maxStrength}%</span></>
                 ) : (
@@ -128,7 +128,7 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
              </div>
           </motion.div>
         ) : (
-          <div className="space-y-40">
+          <div className="space-y-20 md:space-y-40">
             {categories.map((cat, ci) => {
               const filteredWindows = goldenWindows.filter(cat.filter);
               if (filteredWindows.length === 0) return null;

@@ -133,9 +133,9 @@ const Index = () => {
             </div>
 
           {activeCrew && (
-            <div className="pt-32 px-8 md:px-16 max-w-screen-2xl mx-auto mb-32 relative z-10">
-              <div className="flex flex-col md:flex-row gap-16 items-start border-l border-white/5 pl-8 md:pl-16">
-                <div className="space-y-12 flex-1">
+            <div className="pt-16 md:pt-32 px-6 md:px-16 max-w-screen-2xl mx-auto mb-8 md:mb-32 relative z-10">
+              <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-start border-l border-white/5 pl-6 md:pl-16">
+                <div className="space-y-6 md:space-y-12 flex-1">
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -152,7 +152,7 @@ const Index = () => {
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-                      className="text-4xl md:text-8xl font-display font-medium leading-[0.85] tracking-tight text-white mb-2"
+                      className="text-4xl sm:text-5xl md:text-8xl font-display font-medium leading-[0.85] tracking-tight text-white mb-2"
                     >
                       {activeCrew.name}
                     </motion.h1>
@@ -160,18 +160,18 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="w-full md:w-auto flex flex-col items-end gap-12 group">
-                  <div className="text-right">
-                    <div className="text-[10px] font-bold text-white/30 tracking-widest mb-2 text-right uppercase">Invite Friends</div>
-                    <div className="flex items-center gap-2 justify-end">
+                <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-6 md:gap-12 group mt-4 md:mt-0">
+                  <div className="text-left md:text-right w-full">
+                    <div className="text-[10px] font-bold text-white/30 tracking-widest mb-2 text-left md:text-right uppercase">Invite Friends</div>
+                    <div className="flex items-center gap-2 justify-start md:justify-end w-full">
                       <button 
                         onClick={() => {
                           navigator.clipboard.writeText(activeCrew.inviteCode);
                           toast.success("Joined code copied!");
                         }}
-                        className="px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-primary/40 active:scale-95 transition-all duration-700 block group/code"
+                        className="flex-1 md:flex-none px-4 md:px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-primary/40 active:scale-95 transition-all duration-700 block group/code"
                       >
-                        <span className="text-xl font-display font-bold text-white group-hover/code:text-primary transition-colors tracking-widest uppercase">{activeCrew.inviteCode}</span>
+                        <span className="text-lg md:text-xl font-display font-bold text-white group-hover/code:text-primary transition-colors tracking-widest uppercase">{activeCrew.inviteCode}</span>
                       </button>
                       
                       {navigator.share && (
@@ -209,7 +209,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                className="max-w-4xl mx-auto px-8 py-8 md:py-12 flex flex-col items-center space-y-8 md:space-y-12"
+                className="max-w-4xl mx-auto px-6 md:px-8 py-4 md:py-12 flex flex-col items-center space-y-8 md:space-y-12"
               >
                  {activeCrew.ownerId === user?.uid ? (
                    <button 

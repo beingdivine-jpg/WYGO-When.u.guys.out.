@@ -83,15 +83,15 @@ const CrewSection = () => {
     ? Math.round((activeResponses.length / activeCrew.memberIds.length) * 100)
     : 0;
   return (
-    <section className="py-24 md:py-48 px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
+    <section className="py-12 md:py-48 px-4 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
       {/* Decorative Atmospheric Glows */}
       <div className="absolute top-[20%] -left-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-[20%] -right-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full" />
 
-      <div className="max-w-6xl mx-auto relative z-10 space-y-32">
+      <div className="max-w-6xl mx-auto relative z-10 space-y-16 md:space-y-32">
 
         {/* Squad Header */}
-        <div className="flex flex-col md:flex-row gap-16 items-center justify-between">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-between">
           <div className="space-y-6 text-center md:text-left">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -274,7 +274,7 @@ const CrewSection = () => {
                   toast.success(`Invite code ${activeCrew.inviteCode} copied to clipboard!`);
                 }
               }}
-              className="p-10 rounded-[2.5rem] bg-white/[0.03] border border-dashed border-white/10 group hover:bg-primary/[0.05] hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-8 min-h-[340px] shadow-sm">
+              className="p-8 md:p-10 rounded-[2.5rem] bg-white/[0.03] border border-dashed border-white/10 group hover:bg-primary/[0.05] hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-6 md:gap-8 min-h-[280px] md:min-h-[340px] shadow-sm">
               <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 group-hover:text-primary group-hover:border-primary/40 transition-all duration-700">
                 <Users className="w-8 h-8" strokeWidth={1} />
               </div>

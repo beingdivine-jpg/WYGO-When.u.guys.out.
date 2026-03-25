@@ -21,7 +21,7 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
       animate={{ y: 0 }}
       className="fixed bottom-6 md:bottom-12 inset-x-0 z-50 pointer-events-none px-4 flex justify-center"
     >
-      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 max-w-full overflow-x-auto no-scrollbar">
+      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-0.5 sm:gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 min-w-0 max-w-full">
         {navItems.map((item, i) => {
           const isActive = active === item.id;
           return (
@@ -29,7 +29,7 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
               key={item.id}
               data-tab={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`relative flex items-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group ${isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+              className={`relative flex items-center gap-1.5 md:gap-3 px-3 sm:px-5 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group shrink-0 ${isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"}`}
             >
               {isActive && (
                 <motion.div
@@ -39,9 +39,9 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
                 />
               )}
 
-              <item.icon className={`w-5 h-5 transition-transform duration-500 ${isActive ? "scale-110" : "group-hover:scale-110"}`} strokeWidth={isActive ? 2.5 : 1.5} />
+              <item.icon className={`w-4 h-4 md:w-5 md:h-5 transition-transform duration-500 shrink-0 ${isActive ? "scale-110" : "group-hover:scale-110"}`} strokeWidth={isActive ? 2.5 : 1.5} />
 
-              <span className={`text-xs font-bold tracking-wider transition-opacity duration-500 overflow-hidden ${isActive ? "max-w-[100px] opacity-100" : "max-w-0 opacity-0"}`}>
+              <span className={`text-xs font-bold tracking-wider transition-all duration-500 whitespace-nowrap overflow-hidden ${isActive ? "max-w-[80px] opacity-100 md:max-w-[100px]" : "max-w-0 opacity-0"}`}>
                 {item.label}
               </span>
 

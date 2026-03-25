@@ -122,15 +122,14 @@ const SquadSyncSection = () => {
   if (!activeSyncRound) return null;
 
   return (
-    <section className="py-12 md:py-48 px-6 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
+    <section className="pt-8 pb-48 md:py-48 px-4 md:px-6 text-white min-h-screen relative overflow-hidden bg-background selection:bg-primary/20">
       {/* Decorative Atmospheric Glows - pointer-events-none to prevent click blocking */}
       <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[20%] -left-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-12 md:gap-24 items-start">
-
-        {/* Left Column: Social Header */}
-        <div className="w-full md:w-1/3 flex flex-col gap-10 md:gap-16 md:sticky md:top-32">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 relative z-10 max-w-7xl mx-auto">
+        {/* Left Column: Context & Instructions */}
+        <div className="w-full md:w-1/3 flex flex-col gap-6 md:gap-16 md:sticky md:top-32 h-fit">
           <div className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -329,7 +328,7 @@ const SquadSyncSection = () => {
                 exit={{ opacity: 0, y: 10 }}
                 className="pt-12"
               >
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button 
                       onClick={handleSync}
                       disabled={isSubmitting}
@@ -341,7 +340,7 @@ const SquadSyncSection = () => {
                       <button 
                         onClick={handleDiscard}
                         disabled={isSubmitting}
-                        className="px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50"
+                        className="px-6 py-4 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 w-full sm:w-auto"
                       >
                         Discard Changes
                       </button>

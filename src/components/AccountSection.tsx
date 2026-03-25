@@ -98,7 +98,7 @@ const AccountSection = () => {
   };
 
   return (
-    <section className="py-12 md:py-48 px-6 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
+    <section className="py-12 md:py-48 px-4 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
       {/* Decorative Atmospheric Glows */}
       <div className="absolute top-[20%] -left-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-[20%] -right-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full" />
@@ -318,7 +318,7 @@ const AccountSection = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-12 pb-32 md:pb-0"
+              className="space-y-8 md:space-y-12 pb-32 md:pb-0"
             >
               <button 
                 onClick={() => setView("home")}

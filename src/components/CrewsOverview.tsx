@@ -58,9 +58,9 @@ const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
       <div className="absolute top-[10%] -left-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-[10%] -right-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full" />
 
-      <div className="max-w-6xl mx-auto w-full px-8 py-24 relative z-10 space-y-24">
+      <div className="max-w-6xl mx-auto w-full px-6 md:px-8 py-12 md:py-24 relative z-10 space-y-12 md:space-y-24">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-12 border-b border-white/10 pb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 md:gap-12 border-b border-white/10 pb-8 md:pb-12">
           <div className="space-y-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -69,8 +69,8 @@ const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
             >
               <span className="text-social-label text-[9px]">Select a Context</span>
             </motion.div>
-            <h1 className="text-5xl md:text-7xl font-display leading-tight">
-              Your <span className="text-primary italic font-medium text-6xl md:text-8xl">Crews.</span>
+            <h1 className="text-4xl md:text-7xl font-display leading-tight">
+              Your <span className="text-primary italic font-medium text-5xl md:text-8xl">Crews.</span>
             </h1>
             <p className="text-white/50 text-xl font-body">
               Welcome back, @{userProfile?.username || "friend"}. Choose a squad to view plans or start a new sync.
@@ -100,7 +100,7 @@ const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-32 text-center border border-dashed border-white/10 rounded-[3rem] bg-white/[0.02] relative group overflow-hidden"
+            className="flex flex-col items-center justify-center py-16 md:py-32 text-center border border-dashed border-white/10 rounded-[3rem] bg-white/[0.02] relative group overflow-hidden px-4"
           >
             {/* Atmospheric Background for Empty State */}
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -128,7 +128,7 @@ const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 onClick={() => setActiveCrew(crew)}
-                className="group text-left rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-primary/40 transition-all duration-700 p-10 flex flex-col h-[320px] justify-between relative overflow-hidden cursor-pointer shadow-xl"
+                className="group text-left rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-primary/40 transition-all duration-700 p-8 md:p-10 flex flex-col h-[280px] md:h-[320px] justify-between relative overflow-hidden cursor-pointer shadow-xl w-full"
               >
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
