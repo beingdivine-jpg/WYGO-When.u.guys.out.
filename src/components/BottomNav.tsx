@@ -18,15 +18,30 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      // px-3 on mobile keeps the pill 6px away from each edge; md:px-6 restores desktop breathing room
-      className="fixed bottom-6 md:bottom-12 inset-x-0 z-50 pointer-events-none px-3 md:px-6 flex justify-center"
+      /*
+        ROOT CAUSE FIX NOTE:
+        This component is now rendered OUTSIDE the page's `motion.div` wrapper in Index.tsx.
+        Previously it was a child of `motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}`.
+        Framer Motion applies a CSS `transform` on animated elements for GPU compositing.
+        Any parent with a CSS `transform` becomes the "containing block" for `position: fixed`
+        descendants (CSS spec, Section 9.3). This caused the BottomNav to be positioned relative
+        to the parent box width (which could be narrower/offset on mobile) rather than the viewport.
+        Now that it is a sibling of that motion.div, `position: fixed` correctly anchors to the
+        true viewport on all screen sizes.
+
+        CENTERING STRATEGY:
+        `inset-x-0` = left:0; right:0, which constrains the nav box to viewport width.
+        `flex justify-center` centers the inner pill horizontally.
+        The inner pill uses `w-max` so it only takes natural content width,
+        and `style={{ maxWidth: 'calc(100vw - 24px)' }}` as the hard cap that prevents
+        the pill from ever being wider than the viewport minus 24px total margin.
+      */
+      className="fixed bottom-6 md:bottom-12 inset-x-0 z-[100] pointer-events-none flex justify-center"
     >
-      {/*
-        overflow-hidden: prevents any child from widening past the pill's own box.
-        We removed overflow-x-auto (it was allowing scroll instead of preventing overflow).
-        gap-1 md:gap-2 / p-1.5 md:p-2 retain the original desktop spacing exactly.
-      */}
-      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 overflow-hidden">
+      <div
+        className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 w-max overflow-hidden"
+        style={{ maxWidth: "calc(100vw - 24px)" }}
+      >
         {navItems.map((item) => {
           const isActive = active === item.id;
           return (
@@ -35,11 +50,7 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
               data-tab={item.id}
               onClick={() => onNavigate(item.id)}
               aria-label={item.label}
-              /*
-                Mobile: px-3 py-3 (48px total h-padding per button → 4×48+gaps+pill-padding ≈ 220px, fits 375px)
-                Desktop: px-8 py-4 — identical to the original, no visual change
-              */
-              className={`relative flex items-center gap-2 md:gap-3 px-3 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group ${
+              className={`relative flex items-center gap-2 md:gap-3 px-4 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group ${
                 isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -51,7 +62,6 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
                 />
               )}
 
-              {/* Icon: 16px on mobile, 20px on desktop (md:). Original was flat w-5 h-5 for all. */}
               <item.icon
                 className={`w-4 h-4 md:w-5 md:h-5 transition-transform duration-500 flex-shrink-0 ${
                   isActive ? "scale-110" : "group-hover:scale-110"
@@ -59,14 +69,10 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
                 strokeWidth={isActive ? 2.5 : 1.5}
               />
 
-              {/*
-                Active label: max-w-[56px] on mobile (tight clamp), md:max-w-[100px] on desktop (original).
-                Inactive: max-w-0 / opacity-0 — same as original.
-              */}
               <span
-                className={`text-xs font-bold tracking-wider transition-opacity duration-500 overflow-hidden ${
+                className={`text-xs font-bold tracking-wider transition-opacity duration-500 overflow-hidden whitespace-nowrap ${
                   isActive
-                    ? "max-w-[56px] md:max-w-[100px] opacity-100"
+                    ? "max-w-[80px] md:max-w-[100px] opacity-100"
                     : "max-w-0 opacity-0"
                 }`}
               >

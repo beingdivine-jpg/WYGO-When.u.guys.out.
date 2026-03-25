@@ -246,12 +246,16 @@ const Index = () => {
             )}
           </div>
 
-          <BottomNav
-            active={activeNav}
-            onNavigate={setActiveNav}
-          />
         </motion.div>
       </AnimatePresence>
+
+      {/* BottomNav lives OUTSIDE AnimatePresence/motion.div so position:fixed anchors to the true viewport.
+          Framer Motion applies CSS transforms to animated elements, and CSS spec says any ancestor
+          with a transform becomes the containing block for fixed children — breaking viewport anchoring. */}
+      <BottomNav
+        active={activeNav}
+        onNavigate={setActiveNav}
+      />
     </div>
   );
 };
