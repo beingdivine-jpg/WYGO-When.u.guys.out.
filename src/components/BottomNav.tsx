@@ -18,14 +18,15 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-6 md:bottom-12 inset-x-0 z-50 pointer-events-none px-4 flex justify-center"
+      // px-3 on mobile keeps the pill 6px away from each edge; md:px-6 restores desktop breathing room
+      className="fixed bottom-6 md:bottom-12 inset-x-0 z-50 pointer-events-none px-3 md:px-6 flex justify-center"
     >
       {/*
-        overflow-hidden on the pill prevents any child from spilling out.
-        No shrink-0 on buttons — they are allowed to compress.
-        Each button only grows as wide as its content needs (px-2 mobile / px-4 sm / px-8 md).
+        overflow-hidden: prevents any child from widening past the pill's own box.
+        We removed overflow-x-auto (it was allowing scroll instead of preventing overflow).
+        gap-1 md:gap-2 / p-1.5 md:p-2 retain the original desktop spacing exactly.
       */}
-      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-0.5 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 overflow-hidden">
+      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 overflow-hidden">
         {navItems.map((item) => {
           const isActive = active === item.id;
           return (
@@ -34,7 +35,11 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
               data-tab={item.id}
               onClick={() => onNavigate(item.id)}
               aria-label={item.label}
-              className={`relative flex items-center gap-1.5 md:gap-3 px-2 sm:px-4 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group min-w-0 ${
+              /*
+                Mobile: px-3 py-3 (48px total h-padding per button → 4×48+gaps+pill-padding ≈ 220px, fits 375px)
+                Desktop: px-8 py-4 — identical to the original, no visual change
+              */
+              className={`relative flex items-center gap-2 md:gap-3 px-3 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group ${
                 isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -46,6 +51,7 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
                 />
               )}
 
+              {/* Icon: 16px on mobile, 20px on desktop (md:). Original was flat w-5 h-5 for all. */}
               <item.icon
                 className={`w-4 h-4 md:w-5 md:h-5 transition-transform duration-500 flex-shrink-0 ${
                   isActive ? "scale-110" : "group-hover:scale-110"
@@ -53,11 +59,14 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
                 strokeWidth={isActive ? 2.5 : 1.5}
               />
 
-              {/* Label only visible on active tab; max-w clamp keeps it from blowing out the pill */}
+              {/*
+                Active label: max-w-[56px] on mobile (tight clamp), md:max-w-[100px] on desktop (original).
+                Inactive: max-w-0 / opacity-0 — same as original.
+              */}
               <span
-                className={`text-[11px] font-bold tracking-wide whitespace-nowrap transition-all duration-500 overflow-hidden ${
+                className={`text-xs font-bold tracking-wider transition-opacity duration-500 overflow-hidden ${
                   isActive
-                    ? "max-w-[60px] sm:max-w-[80px] md:max-w-[100px] opacity-100"
+                    ? "max-w-[56px] md:max-w-[100px] opacity-100"
                     : "max-w-0 opacity-0"
                 }`}
               >

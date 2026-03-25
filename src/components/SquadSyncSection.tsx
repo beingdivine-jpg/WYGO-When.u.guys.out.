@@ -122,12 +122,12 @@ const SquadSyncSection = () => {
   if (!activeSyncRound) return null;
 
   return (
-    <section className="pt-8 pb-48 md:py-48 px-4 md:px-6 text-white min-h-screen relative overflow-hidden bg-background selection:bg-primary/20">
+    <section className="pt-4 pb-48 md:py-48 px-4 md:px-8 bg-background text-white min-h-screen relative overflow-hidden selection:bg-primary/20">
       {/* Decorative Atmospheric Glows - pointer-events-none to prevent click blocking */}
       <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[20%] -left-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="flex flex-col md:flex-row gap-8 md:gap-16 relative z-10 max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-8 md:gap-24 items-start">
         {/* Left Column: Context & Instructions */}
         <div className="w-full md:w-1/3 flex flex-col gap-6 md:gap-16 md:sticky md:top-32 h-fit">
           <div className="space-y-8">
