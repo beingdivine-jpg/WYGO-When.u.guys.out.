@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut, 
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -10,9 +12,14 @@ import {
   updatePassword as firebaseUpdatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
-  User as FirebaseUser
+  browserLocalPersistence,
+  setPersistence,
+  User as FirebaseUser,
+  deleteUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { isMobileDevice } from '../lib/utils';
+import { dbService } from '../lib/dbService';
 
 export interface UserProfile {
   uid: string;
@@ -39,6 +46,8 @@ interface AuthContextType {
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   changePassword: (oldPass: string, newPass: string) => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
+  authError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -51,7 +60,9 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   updateProfile: async () => {},
   resetPassword: async () => {},
-  changePassword: async () => {}
+  changePassword: async () => {},
+  deleteAccount: async () => {},
+  authError: null
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -60,8 +71,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Ensure persistence is set to local
+    setPersistence(auth, browserLocalPersistence).catch(err => {
+      console.error("Failed to set auth persistence:", err);
+    });
+
+    // Handle redirect result for mobile auth
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("📱 Google Redirect Login Result:", result.user.email);
+        }
+      } catch (error: any) {
+        console.error("🔥 Google Redirect Error Details:", error);
+        
+        // Specific handling for "missing initial state" error
+        if (error.message?.includes("missing initial state") || error.code === 'auth/internal-error') {
+          console.warn("Detected missing initial state - likely an in-app browser or storage partitioning issue.");
+          setAuthError("Sign-in failed: Your browser blocked the redirect state. Please try opening this in an external browser (like Safari or Chrome).");
+        } else {
+          setAuthError(error.message || "An error occurred during sign-in.");
+        }
+      }
+    };
+
+    handleRedirect();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       
@@ -108,8 +147,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signInWithGoogle = async () => {
+    setIsLoading(true);
+    const isMobile = isMobileDevice();
+    console.log(`🚀 Initialising Google Sign In (isMobile: ${isMobile})`);
+
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (isMobile) {
+        // Use redirect for mobile to avoid popup blockers
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        // Use popup for desktop for better UX
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (error: any) {
       console.error("🔥 Firebase Google SignIn Full Error:", error);
       console.error("🔥 Code:", error?.code, "Message:", error?.message);
@@ -121,6 +170,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Configuration Error: This domain is not authorized in Firebase Console.");
       } else {
         throw new Error(`Google Auth Failed: ${error?.message || 'Unknown network or configuration error'}`);
+      }
+    } finally {
+      // For mobile redirect, the page will reload, so setIsLoading(false) isn't strictly necessary here,
+      // but for desktop popup it's important.
+      if (!isMobile) {
+        setIsLoading(false);
       }
     }
   };
@@ -175,6 +230,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteAccount = async (password?: string) => {
+    if (!user) return;
+    try {
+      // 1. Re-authenticate if it's an email user
+      if (user.providerData[0]?.providerId === 'password' && password) {
+        const credential = EmailAuthProvider.credential(user.email!, password);
+        await reauthenticateWithCredential(user, credential);
+      }
+      
+      const uid = user.uid;
+      
+      // 2. Leave all crews (handles ownership transfer/disband)
+      const userCrews = await dbService.getUserCrews(uid);
+      for (const crew of userCrews) {
+        await dbService.leaveCrew(crew.id, uid);
+      }
+      
+      // 3. Delete Firestore profile
+      await deleteDoc(doc(db, 'users', uid));
+      
+      // 4. Delete Firebase Auth user
+      await deleteUser(user);
+      
+      // State updates are handled by onAuthStateChanged
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      throw error;
+    }
+  };
+
   const updateProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
     try {
@@ -206,7 +291,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signOut,
       updateProfile,
       resetPassword,
-      changePassword
+      changePassword,
+      deleteAccount,
+      authError
     }}>
       {children}
     </AuthContext.Provider>

@@ -2,10 +2,30 @@ import { motion } from "framer-motion";
 import GoldenWindowCard from "./GoldenWindowCard";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { useCrew } from "@/contexts/CrewContext";
+import { syncEngine } from "@/lib/syncEngine";
 
-const GoldenWindowsSection = () => {
-  const { activeCrew, activeResponses, calculatedResults } = useCrew();
-  const goldenWindows = calculatedResults;
+interface GoldenWindowsSectionProps {
+  overrideRound?: any;
+  overrideResponses?: any[];
+  title?: string;
+  subtitle?: string;
+}
+
+const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitle }: GoldenWindowsSectionProps) => {
+  const { activeCrew, activeResponses, calculatedResults, activeSyncRound } = useCrew();
+  
+  const currentRound = overrideRound || activeSyncRound;
+  const currentResponses = overrideResponses || activeResponses;
+  
+  // If we have overrides, we need to recalculate results locally for this view
+  const goldenWindows = (overrideRound && overrideResponses) 
+    ? syncEngine.calculateResults(
+        overrideResponses, 
+        activeCrew!, 
+        overrideRound.durationMonths,
+        overrideRound.startDate?.toDate ? overrideRound.startDate.toDate() : new Date(overrideRound.startDate)
+      )
+    : calculatedResults;
   
   const categories = [
     { title: "Perfect Moments", filter: (gw: any) => gw.matchStrength > 90, description: "Everyone is free. No excuses." },
@@ -40,9 +60,14 @@ const GoldenWindowsSection = () => {
 
             <div className="space-y-4">
               <h2 className="text-display-header leading-tight max-w-2xl">
-                The moments you've been <br />
-                <span className="text-primary italic font-medium text-7xl md:text-9xl">waiting for.</span>
+                {title || (
+                  <>
+                    The moments you've been <br />
+                    <span className="text-primary italic font-medium text-7xl md:text-9xl">waiting for.</span>
+                  </>
+                )}
               </h2>
+              {subtitle && <p className="text-white/40 font-body text-xl">{subtitle}</p>}
             </div>
           </div>
 

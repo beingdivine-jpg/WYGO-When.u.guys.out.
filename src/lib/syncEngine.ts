@@ -142,7 +142,7 @@ export const syncEngine = {
           freeMembers: freeNames,
           maybeMembers: maybeNames,
           busyMembers: busyNames,
-          explanation: this.generateExplanation(freeCount, maybeCount, memberCount, !!detectedHoliday),
+          explanation: this.generateExplanation(freeCount, maybeCount, memberCount, detectedHoliday),
           holidayBoost: detectedHoliday || undefined,
           leaveDays
         });
@@ -161,11 +161,13 @@ export const syncEngine = {
     return tags;
   },
 
-  generateExplanation(free: number, maybe: number, total: number, isHoliday: boolean): string {
+  generateExplanation(free: number, maybe: number, total: number, holidayName: string | null): string {
     if (free === total) return "Total squad alignment! Everyone is free and ready to go.";
-    if (free + maybe === total && maybe > 0) return `${free} out of ${total} are confirmed free. The rest are likely to join!`;
-    if (isHoliday && free > 0) return `Holiday weekend unlocked! ${free} members are already free.`;
-    if (free >= Math.ceil(total * 0.5)) return `This works for the majority of the crew (${free}/${total} free).`;
-    return `A backup option. Only ${free} members are confirmed right now.`;
+    if (holidayName && free + maybe === total) return `Magic overlap! ${holidayName} makes this the ultimate window for everyone.`;
+    if (holidayName && free > 0) return `${holidayName} holiday detected! ${free} members are already free to celebrate.`;
+    if (free + maybe === total && maybe > 0) return `Strong potential: ${free} confirmed free, and ${maybe} are likely to join!`;
+    if (free >= Math.ceil(total * 0.7)) return `High confidence: This works for nearly the whole crew (${free}/${total}).`;
+    if (free >= Math.ceil(total * 0.5)) return `Majority match: ${free} out of ${total} are free. A solid bet for an escape.`;
+    return `Backup option: Still waiting on more squad markers to confirm this window.`;
   }
 };

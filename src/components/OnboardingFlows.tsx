@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Users, ArrowRight, ChevronLeft, ChevronDown, Globe, Calendar, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface OnboardingFlowsProps {
     type: "create" | "join";
@@ -26,9 +27,16 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
         setIsSubmitting(true);
         try {
             await onComplete(formData);
-        } catch (error) {
+            toast.success(type === "create" ? "Squad created!" : "Joined the squad!");
+        } catch (error: any) {
             console.error("Operation failed", error);
-            alert("Something went wrong. Please check your connection or invite code.");
+            if (error.message === "SQUAD_NOT_FOUND") {
+                toast.error("Squad not found. Check your code!");
+            } else if (error.message === "ALREADY_MEMBER") {
+                toast.error("You're already in this squad!");
+            } else {
+                toast.error("Something went wrong. Try again later.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -41,7 +49,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
 
             <div className="flex-1 flex flex-col relative z-10 max-w-5xl mx-auto w-full p-8 md:p-24 justify-center">
                 {/* Header / Nav */}
-                <div className="absolute top-12 left-8 md:left-24 right-8 md:right-24 flex justify-between items-center">
+                <div className="absolute top-8 md:top-12 left-6 md:left-24 right-6 md:right-24 flex justify-between items-center">
                     <button
                         onClick={prevStep}
                         className="flex items-center gap-2 text-white/40 hover:text-white transition-all group"
@@ -81,13 +89,13 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                                className="space-y-24"
+                                className="space-y-12 md:space-y-24"
                             >
                                 {step === 1 && (
-                                    <div className="space-y-16">
+                                    <div className="space-y-10 md:space-y-16">
                                         <div className="space-y-4">
                                             <span className="text-social-label">Step 01 / Group Identity</span>
-                                            <h2 className="text-5xl md:text-7xl font-display font-medium leading-tight">
+                                            <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                                 What shall we call <br />
                                                 <span className="text-primary italic">your crew?</span>
                                             </h2>
@@ -100,7 +108,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                                 placeholder="The Weekend Legends..."
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                className="w-full bg-transparent border-b-2 border-white/10 py-8 text-4xl md:text-6xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
+                                                className="w-full bg-transparent border-b-2 border-white/10 py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
                                             />
                                             <div className="mt-4 text-[10px] font-medium text-white/20 tracking-wider">
                                                 Give your squad a name that sticks.
@@ -118,10 +126,10 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                 )}
 
                                 {step === 2 && (
-                                    <div className="space-y-16">
+                                    <div className="space-y-10 md:space-y-16">
                                         <div className="space-y-4">
                                             <span className="text-social-label">Step 02 / Planning Horizon</span>
-                                            <h2 className="text-5xl md:text-7xl font-display font-medium leading-tight">
+                                            <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                                 How far ahead are <br />
                                                 <span className="text-primary italic">we looking?</span>
                                             </h2>
@@ -138,10 +146,10 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                                     onClick={() => setFormData({ ...formData, duration: m.val })}
                                                     className={`p-10 rounded-[2rem] text-left transition-all duration-500 border ${formData.duration === m.val ? "bg-primary border-primary text-black shadow-xl scale-[1.02]" : "bg-white/5 border-white/5 hover:border-white/10 text-white/60"}`}
                                                 >
-                                                    <div className="text-2xl font-display font-bold mb-1">
+                                                    <div className="text-xl md:text-2xl font-display font-bold mb-1">
                                                         {m.label}
                                                     </div>
-                                                    <div className={`text-xs font-medium ${formData.duration === m.val ? "text-black/60" : "text-white/30"}`}>
+                                                    <div className={`text-[10px] md:text-xs font-medium ${formData.duration === m.val ? "text-black/60" : "text-white/30"}`}>
                                                         {m.desc}
                                                     </div>
                                                 </button>
@@ -158,10 +166,10 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                 )}
 
                                 {step === 3 && (
-                                    <div className="space-y-16">
+                                    <div className="space-y-10 md:space-y-16">
                                         <div className="space-y-4">
                                             <span className="text-social-label">Step 03 / Home Base</span>
-                                            <h2 className="text-5xl md:text-7xl font-display font-medium leading-tight">
+                                            <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                                 Where is the squad <br />
                                                 <span className="text-primary italic">mostly based?</span>
                                             </h2>
@@ -171,7 +179,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                             <select
                                                 value={formData.country}
                                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                                className="w-full bg-transparent border-b-2 border-white/10 py-8 text-4xl md:text-6xl font-display font-medium text-foreground appearance-none focus:outline-none focus:border-primary transition-all tracking-tight cursor-pointer"
+                                                className="w-full bg-transparent border-b-2 border-white/10 py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground appearance-none focus:outline-none focus:border-primary transition-all tracking-tight cursor-pointer"
                                             >
                                                 {["Luxembourg", "France", "Germany", "Belgium", "Europe"].map(c => (
                                                     <option key={c} value={c} className="bg-[#120a16] text-white py-4">{c}</option>
@@ -200,7 +208,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                             >
                                 <div className="space-y-4">
                                     <span className="text-social-label">Join a Crew</span>
-                                    <h2 className="text-5xl md:text-7xl font-display font-medium leading-tight">
+                                    <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                         Enter your <br />
                                         <span className="text-primary italic">secret code.</span>
                                     </h2>
@@ -213,7 +221,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                         placeholder="e.g. WYGO-7721"
                                         value={formData.code}
                                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                                        className="w-full bg-transparent border-b-2 border-white/10 py-8 text-4xl md:text-6xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
+                                        className="w-full bg-transparent border-b-2 border-white/10 py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
                                     />
                                     <div className="mt-4 text-[10px] font-medium text-white/20 tracking-wider">
                                         Provided by your crew captain.

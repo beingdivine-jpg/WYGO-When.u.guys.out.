@@ -19,16 +19,17 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-4"
+      className="fixed bottom-6 md:bottom-12 inset-x-0 z-50 pointer-events-none px-4 flex justify-center"
     >
-      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-2 rounded-full pointer-events-auto flex items-stretch gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 max-w-full overflow-x-auto no-scrollbar">
         {navItems.map((item, i) => {
           const isActive = active === item.id;
           return (
             <button
               key={item.id}
+              data-tab={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`relative flex items-center gap-3 px-8 py-4 rounded-full transition-all duration-500 group ${isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+              className={`relative flex items-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group ${isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"}`}
             >
               {isActive && (
                 <motion.div

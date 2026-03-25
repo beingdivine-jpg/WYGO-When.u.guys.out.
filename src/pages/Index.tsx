@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, User as UserIcon, Zap, ArrowRight, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCrew } from "@/contexts/CrewContext";
+import { toast } from "sonner";
 
 const Index = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -85,17 +86,17 @@ const Index = () => {
           onJoinClick={() => setAppState("join")}
         />
         {/* Account Quick Settings */}
-        <div className="fixed top-8 right-8 flex items-center gap-4 z-[9999] pointer-events-auto">
+        <div className="fixed top-6 md:top-8 right-6 md:right-8 flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-4 z-[9999] pointer-events-auto">
            <button 
              onClick={() => setActiveNav("profile")}
-             className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-white/50 hover:text-white transition-all uppercase border border-white/10 px-6 py-2.5 rounded-full bg-black/40 backdrop-blur-xl shadow-2xl hover:border-primary/50 group"
+             className="flex items-center gap-2 text-[9px] md:text-[10px] font-bold tracking-widest text-white/50 hover:text-white transition-all uppercase border border-white/10 px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-black/40 backdrop-blur-xl shadow-2xl hover:border-primary/50 group"
            >
-             <UserIcon className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+             <UserIcon className="w-3 md:w-3.5 h-3 md:h-3.5 group-hover:scale-110 transition-transform" />
              Account
            </button>
            <button 
              onClick={signOut}
-             className="text-[10px] font-bold tracking-widest text-white/50 hover:text-white transition-all uppercase border border-white/10 px-6 py-2.5 rounded-full bg-black/40 backdrop-blur-xl shadow-2xl hover:border-red-500/50"
+             className="text-[9px] md:text-[10px] font-bold tracking-widest text-white/50 hover:text-white transition-all uppercase border border-white/10 px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-black/40 backdrop-blur-xl shadow-2xl hover:border-red-500/50"
            >
              Sign Out
            </button>
@@ -111,7 +112,7 @@ const Index = () => {
             key={activeCrew ? `crew-view-${activeCrew.id}` : 'account-view'}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="pb-64 bg-background min-h-screen relative overflow-hidden"
+            className="pb-80 bg-background min-h-[100dvh] w-full relative overflow-x-hidden"
         >
             {/* Cinematic Textures */}
             <div className="absolute inset-0 scanlines opacity-20 z-50 pointer-events-none" />
@@ -141,7 +142,7 @@ const Index = () => {
                     className="flex items-center gap-4"
                   >
                     <div className="w-1.5 h-1.5 bg-primary glow-lime animate-pulse" />
-                    <span className="text-label-surgical tracking-[0.8em]">
+                    <span className="text-label-surgical tracking-widest md:tracking-[0.8em] break-words whitespace-normal max-w-full block">
                       {activeNav === 'sync' ? 'Crew Connected' : activeNav === 'results' ? 'Moments Found' : 'Squad Hub'}
                     </span>
                   </motion.div>
@@ -151,7 +152,7 @@ const Index = () => {
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-                      className="text-6xl md:text-8xl font-display font-medium leading-[0.85] tracking-tight text-white mb-2"
+                      className="text-4xl md:text-8xl font-display font-medium leading-[0.85] tracking-tight text-white mb-2"
                     >
                       {activeCrew.name}
                     </motion.h1>
@@ -161,9 +162,32 @@ const Index = () => {
 
                 <div className="w-full md:w-auto flex flex-col items-end gap-12 group">
                   <div className="text-right">
-                    <div className="text-[10px] font-bold text-white/30 tracking-widest mb-2 text-right uppercase">Join Code</div>
-                    <div className="px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/10 group-hover:border-primary/40 transition-all duration-700">
-                      <span className="text-xl font-display font-bold text-white group-hover:text-primary transition-colors tracking-widest uppercase">{activeCrew.inviteCode}</span>
+                    <div className="text-[10px] font-bold text-white/30 tracking-widest mb-2 text-right uppercase">Invite Friends</div>
+                    <div className="flex items-center gap-2 justify-end">
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(activeCrew.inviteCode);
+                          toast.success("Joined code copied!");
+                        }}
+                        className="px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-primary/40 active:scale-95 transition-all duration-700 block group/code"
+                      >
+                        <span className="text-xl font-display font-bold text-white group-hover/code:text-primary transition-colors tracking-widest uppercase">{activeCrew.inviteCode}</span>
+                      </button>
+                      
+                      {navigator.share && (
+                        <button 
+                          onClick={() => {
+                            navigator.share({
+                              title: `Join my WYGO Squad: ${activeCrew.name}`,
+                              text: `Hey! Join our squad on WYGO using code: ${activeCrew.inviteCode}`,
+                              url: window.location.origin
+                            }).catch(() => {});
+                          }}
+                          className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 active:scale-90 transition-all shrink-0"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -185,7 +209,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                className="max-w-4xl mx-auto px-8 py-12 flex flex-col items-center space-y-12"
+                className="max-w-4xl mx-auto px-8 py-8 md:py-12 flex flex-col items-center space-y-8 md:space-y-12"
               >
                  {activeCrew.ownerId === user?.uid ? (
                    <button 

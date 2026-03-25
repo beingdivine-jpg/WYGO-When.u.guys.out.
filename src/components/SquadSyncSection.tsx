@@ -3,16 +3,38 @@ import { useState, useEffect } from "react";
 import { type AvailabilityStatus, statusConfig } from "@/types";
 import { useCrew } from "@/contexts/CrewContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Calendar, Zap } from "lucide-react";
+import { Calendar, Zap, XCircle, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { syncEngine } from "@/lib/syncEngine";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statuses: AvailabilityStatus[] = ["free", "maybe", "busy", "unknown"];
 
 const SquadSyncSection = () => {
   const { user } = useAuth();
-  const { activeCrew, activeSyncRound, activeResponses, submitWeekendResponse, syncDraft, setSyncDraft, clearSyncDraft } = useCrew();
+  const { activeCrew, activeSyncRound, activeResponses, submitWeekendResponse, syncDraft, setSyncDraft, clearSyncDraft, cancelActiveRound } = useCrew();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isOwner = activeCrew?.ownerId === user?.uid;
+
+  const handleCancelRound = async () => {
+    if (!activeCrew) return;
+    try {
+      await cancelActiveRound(activeCrew.id);
+      toast.success("Sync round cancelled.");
+    } catch (error) {
+      toast.error("Failed to cancel round.");
+    }
+  };
   
   // Use activeSyncRound to generate weekends
   const weekends = activeSyncRound 
@@ -100,15 +122,15 @@ const SquadSyncSection = () => {
   if (!activeSyncRound) return null;
 
   return (
-    <section className="py-24 md:py-48 px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
+    <section className="py-12 md:py-48 px-6 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
       {/* Decorative Atmospheric Glows - pointer-events-none to prevent click blocking */}
       <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[20%] -left-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-24 items-start">
+      <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-12 md:gap-24 items-start">
 
         {/* Left Column: Social Header */}
-        <div className="w-full md:w-1/3 flex flex-col gap-16 md:sticky md:top-32">
+        <div className="w-full md:w-1/3 flex flex-col gap-10 md:gap-16 md:sticky md:top-32">
           <div className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -118,7 +140,7 @@ const SquadSyncSection = () => {
               <span className="text-social-label text-[9px]">Live Squad Sync</span>
             </motion.div>
 
-            <h2 className="text-5xl md:text-7xl font-display font-medium leading-tight">
+            <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
               {hasUnsavedChanges ? (
                 <>Your <span className="text-primary italic">draft</span> markers.</>
               ) : (
@@ -126,7 +148,30 @@ const SquadSyncSection = () => {
               )}
             </h2>
 
-            <p className="text-lg text-white/50 font-body leading-relaxed max-w-xs">
+            {isOwner && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-red-500/40 hover:text-red-500 transition-colors">
+                    <XCircle className="w-3.5 h-3.5" />
+                    Cancel This Sync Round
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-background border-white/10 text-white">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Sync Round?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-white/60">
+                      This will stop the current sync process for the entire squad. All current markers will be archived.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Keep Round</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCancelRound} className="bg-red-500 hover:bg-red-600 text-white font-bold">Cancel Round</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            <p className="text-base md:text-lg text-white/50 font-body leading-relaxed max-w-xs">
               Let the crew know when you're around. We'll find the magic windows for everyone.
             </p>
 
@@ -194,7 +239,7 @@ const SquadSyncSection = () => {
         </div>
 
         {/* Right Column: The Weekend Selector */}
-        <div className="flex-1 w-full space-y-6">
+        <div className="flex-1 w-full space-y-4 md:space-y-6">
           {weekends.map((weekend, i) => {
             const status = availability[weekend.id] || "unknown";
 
@@ -205,7 +250,7 @@ const SquadSyncSection = () => {
                 onClick={() => cycleStatus(weekend.id)}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full flex items-center justify-between p-8 rounded-[2.5rem] transition-all duration-500 group relative border shadow-2xl active:scale-95 ${
+                className={`w-full flex items-center justify-between p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] transition-all duration-500 group relative border shadow-2xl active:scale-95 ${
                   status === 'free' ? 'bg-primary border-primary text-black' :
                   status === 'maybe' ? 'bg-amber-400/20 border-amber-400/30 text-amber-200' :
                   status === 'busy' ? 'bg-white/5 border-white/5 text-white/20' :
@@ -221,7 +266,7 @@ const SquadSyncSection = () => {
                     {i + 1}
                   </div>
                   <div className="flex flex-col items-start gap-1">
-                    <h3 className={`text-3xl md:text-4xl font-display font-medium tracking-tight ${
+                    <h3 className={`text-2xl md:text-4xl font-display font-medium tracking-tight ${
                       status === 'busy' ? 'opacity-40' : 'opacity-100'
                     }`}>
                       {weekend.label}
@@ -307,6 +352,62 @@ const SquadSyncSection = () => {
           </AnimatePresence>
         </div>
       </div>
+      <AnimatePresence>
+        {hasUnsavedChanges && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-24 inset-x-0 mx-auto z-[60] w-[calc(100%-2rem)] max-w-sm"
+          >
+            <div className="bg-black/90 backdrop-blur-3xl border border-white/10 rounded-2xl p-3 md:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3 md:gap-4 ring-1 ring-white/5">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  {isSubmitting ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <AlertCircle className="w-4 h-4 md:w-5 md:h-5" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[8px] md:text-[10px] font-bold tracking-widest text-primary uppercase">Draft Mode</div>
+                  <div className="text-[10px] md:text-xs text-white/60 font-medium truncate">
+                    {isSubmitting ? "Syncing..." : "Unsaved markers"}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-1.5 md:gap-2 shrink-0">
+                <button 
+                  onClick={handleDiscard}
+                  disabled={isSubmitting}
+                  className="px-3 md:px-4 py-2 rounded-lg bg-white/5 text-[8px] md:text-[10px] font-bold tracking-widest text-white/40 hover:text-white uppercase transition-colors disabled:opacity-50"
+                >
+                  Discard
+                </button>
+                <button 
+                  onClick={handleSync}
+                  disabled={isSubmitting}
+                  className="px-4 md:px-6 py-2 rounded-lg bg-primary text-black text-[8px] md:text-[10px] font-bold tracking-widest uppercase hover:scale-105 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+                >
+                  {isSubmitting ? "Syncing" : "Save"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!hasUnsavedChanges && Object.keys(availability).length > 0 && (
+        <div className="fixed bottom-32 inset-x-0 flex justify-center z-[60] transition-opacity animate-in fade-in slide-in-from-bottom-4">
+           <button 
+             onClick={() => {
+                // Find BottomNav and click the 'results' tab programmatically, or use a context navigation if available
+                const resultsTab = document.querySelector('[data-tab="results"]') as HTMLButtonElement | null;
+                if (resultsTab) resultsTab.click();
+             }}
+             className="bg-black/90 backdrop-blur-xl border border-primary/40 shadow-[0_10px_40px_rgba(244,86,149,0.3)] rounded-full px-8 py-4 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all pointer-events-auto cursor-pointer group"
+           >
+              <Zap className="w-4 h-4 text-primary group-hover:fill-primary transition-all delay-75" />
+              <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white uppercase">View Sync Results</span>
+           </button>
+        </div>
+      )}
     </section>
   );
 };

@@ -13,13 +13,26 @@ import {
   Mail,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  MessageSquare
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type AccountView = "home" | "edit" | "security";
 
 const AccountSection = () => {
-  const { user, userProfile, updateProfile, changePassword, signOut } = useAuth();
+  const { user, userProfile, updateProfile, changePassword, signOut, deleteAccount } = useAuth();
   const [view, setView] = useState<AccountView>("home");
   const [isUpdating, setIsUpdating] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -43,10 +56,10 @@ const AccountSection = () => {
     setFeedback(null);
     try {
       await updateProfile(editData);
-      setFeedback({ type: "success", msg: "Profile updated successfully!" });
+      setFeedback({ type: "success", msg: "Profile updated! Looking good, squad member." });
       setTimeout(() => setView("home"), 1500);
     } catch (error: any) {
-      setFeedback({ type: "error", msg: error.message || "Failed to update profile." });
+      setFeedback({ type: "error", msg: "Oops! Couldn't update your profile. Try again?" });
     } finally {
       setIsUpdating(false);
     }
@@ -62,18 +75,30 @@ const AccountSection = () => {
     setFeedback(null);
     try {
       await changePassword(pwData.old, pwData.new);
-      setFeedback({ type: "success", msg: "Password changed successfully!" });
+      setFeedback({ type: "success", msg: "Password updated! Your account is secure." });
       setPwData({ old: "", new: "", confirm: "" });
       setTimeout(() => setView("home"), 1500);
     } catch (error: any) {
-      setFeedback({ type: "error", msg: error.message || "Failed to change password. check your old password." });
+      setFeedback({ type: "error", msg: "Hmm, that old password doesn't look right. Try again?" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsUpdating(true);
+    setFeedback(null);
+    try {
+      await deleteAccount();
+    } catch (error: any) {
+      setFeedback({ type: "error", msg: error.message || "Failed to delete account. You may need to sign in again first." });
     } finally {
       setIsUpdating(false);
     }
   };
 
   return (
-    <section className="py-24 md:py-48 px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
+    <section className="py-12 md:py-48 px-6 md:px-8 bg-background text-white relative overflow-hidden selection:bg-primary/20">
       {/* Decorative Atmospheric Glows */}
       <div className="absolute top-[20%] -left-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-[20%] -right-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full" />
@@ -89,22 +114,22 @@ const AccountSection = () => {
               className="space-y-12"
             >
               {/* Profile Card */}
-              <div className="p-12 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-md relative overflow-hidden group">
+              <div className="p-8 md:p-12 rounded-[2.5rem] md:rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-md relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] rounded-full translate-x-1/2 -translate-y-1/2" />
                 
-                <div className="flex flex-col md:flex-row gap-12 items-center text-center md:text-left relative z-10">
+                 <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center text-center md:text-left relative z-10">
                    <div className="relative group/avatar">
-                      <div className="w-32 h-32 rounded-[2.5rem] bg-white/10 flex items-center justify-center text-5xl shadow-2xl relative overflow-hidden ring-4 ring-white/5 transition-transform group-hover/avatar:scale-105 duration-700">
+                      <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] bg-white/10 flex items-center justify-center text-4xl md:text-5xl shadow-2xl relative overflow-hidden ring-4 ring-white/5 transition-transform group-hover/avatar:scale-105 duration-700">
                         {userProfile?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || <User className="w-12 h-12" />}
                       </div>
-                      <button className="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-primary text-black shadow-lg opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 hover:scale-110">
+                      <button className="absolute -bottom-1 -right-1 p-2.5 rounded-xl bg-primary text-black shadow-lg opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 hover:scale-110">
                          <Camera className="w-4 h-4" />
                       </button>
                    </div>
 
                    <div className="space-y-4 flex-1">
                       <div className="space-y-1">
-                        <h2 className="text-5xl font-display font-medium">{userProfile?.displayName || "Friend"}</h2>
+                        <h2 className="text-3xl md:text-5xl font-display font-medium">{userProfile?.displayName || "Friend"}</h2>
                         <p className="text-primary italic font-medium">@{userProfile?.username || "squad_member"}</p>
                       </div>
                       <div className="flex flex-wrap gap-4 pt-2 justify-center md:justify-start">
@@ -128,15 +153,15 @@ const AccountSection = () => {
                    <button
                      key={item.label}
                      onClick={() => setView(item.target)}
-                     className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:border-primary/40 text-left transition-all group flex items-center justify-between"
+                     className="p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-white/5 border border-white/10 hover:border-primary/40 text-left transition-all group flex items-center justify-between"
                    >
                      <div className="flex items-center gap-6">
                         <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                            <item.icon className="w-6 h-6" />
                         </div>
                         <div>
-                           <div className="font-display font-medium text-lg text-white group-hover:text-primary transition-colors">{item.label}</div>
-                           <div className="text-xs text-white/30">{item.sub}</div>
+                           <div className="font-display font-medium text-base md:text-lg text-white group-hover:text-primary transition-colors">{item.label}</div>
+                           <div className="text-[10px] md:text-xs text-white/30">{item.sub}</div>
                         </div>
                      </div>
                      <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -145,18 +170,63 @@ const AccountSection = () => {
                  
                  <button
                     onClick={signOut}
-                    className="p-8 rounded-[2rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/40 text-left transition-all group flex items-center justify-between md:col-span-2"
+                    className="p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-white/5 border border-white/10 hover:border-white/20 text-left transition-all group flex items-center justify-between"
                  >
                     <div className="flex items-center gap-6">
-                       <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-red-500/20 group-hover:text-red-500 transition-colors">
+                       <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-white/10 group-hover:text-white transition-colors">
                           <LogOut className="w-6 h-6" />
                        </div>
                        <div>
-                          <div className="font-display font-medium text-lg text-white group-hover:text-red-500 transition-colors">Sign Out</div>
-                          <div className="text-xs text-white/30">Securely exit your account</div>
+                          <div className="font-display font-medium text-base md:text-lg text-white group-hover:text-white transition-colors">Sign Out</div>
+                          <div className="text-[10px] md:text-xs text-white/30">Securely exit your account</div>
+                       </div>
+                     </div>
+                </button>
+
+                 <button
+                    onClick={() => window.open('mailto:divinjoseph@gmail.com?subject=WYGO Beta Feedback', '_blank')}
+                    className="p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-primary/5 border border-primary/10 hover:border-primary/40 text-left transition-all group flex items-center justify-between"
+                 >
+                    <div className="flex items-center gap-6">
+                       <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                          <MessageSquare className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <div className="font-display font-medium text-base md:text-lg text-white group-hover:text-primary transition-colors">Share Feedback</div>
+                          <div className="text-[10px] md:text-xs text-white/30">Help us make WYGO better</div>
                        </div>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-red-500/5 border border-red-500/10 hover:border-red-500/40 text-left transition-all group flex items-center justify-between">
+                      <div className="flex items-center gap-6">
+                         <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-red-500/20 group-hover:text-red-500 transition-colors">
+                            <Trash2 className="w-6 h-6" />
+                         </div>
+                         <div>
+                            <div className="font-display font-medium text-base md:text-lg text-white group-hover:text-red-500 transition-colors">Delete Account</div>
+                            <div className="text-[10px] md:text-xs text-white/30">Permanently remove your data</div>
+                         </div>
+                      </div>
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-background border-white/10 text-white shadow-2xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/60">
+                        This action cannot be undone. This will permanently delete your account and remove your 
+                        profile from all squads.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteAccount} className="bg-red-500 hover:bg-red-600 text-white font-bold">Delete Account</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </motion.div>
           )}
@@ -179,8 +249,8 @@ const AccountSection = () => {
 
               <div className="space-y-16">
                  <div>
-                    <h2 className="text-5xl font-display font-medium">Edit <span className="text-primary italic">Profile.</span></h2>
-                    <p className="text-white/40 mt-2">Personalize how the squad sees you.</p>
+                    <h2 className="text-3xl md:text-5xl font-display font-medium">Edit <span className="text-primary italic">Profile.</span></h2>
+                    <p className="text-white/40 mt-2 text-sm md:text-base">Personalize how the squad sees you.</p>
                  </div>
 
                  <form onSubmit={handleUpdateProfile} className="space-y-8 max-w-xl">
@@ -248,7 +318,7 @@ const AccountSection = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-12"
+              className="space-y-12 pb-32 md:pb-0"
             >
               <button 
                 onClick={() => setView("home")}
@@ -260,8 +330,8 @@ const AccountSection = () => {
 
               <div className="space-y-16">
                  <div>
-                    <h2 className="text-5xl font-display font-medium">Security <span className="text-primary italic">Settings.</span></h2>
-                    <p className="text-white/40 mt-2">Manage your account protection.</p>
+                    <h2 className="text-3xl md:text-5xl font-display font-medium">Security <span className="text-primary italic">Settings.</span></h2>
+                    <p className="text-white/40 mt-2 text-sm md:text-base">Manage your account protection.</p>
                  </div>
 
                  <div className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-4 max-w-xl">

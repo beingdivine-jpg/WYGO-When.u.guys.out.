@@ -1,7 +1,19 @@
 import { motion } from "framer-motion";
-import { Users, Plus, ArrowRight } from "lucide-react";
+import { Users, Plus, ArrowRight, LogOut, Trash2 } from "lucide-react";
 import { useCrew } from "@/contexts/CrewContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CrewsOverviewProps {
   onCreateClick: () => void;
@@ -9,8 +21,28 @@ interface CrewsOverviewProps {
 }
 
 const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
-  const { userProfile } = useAuth();
-  const { userCrews, setActiveCrew, isLoadingCrews } = useCrew();
+  const { user, userProfile } = useAuth();
+  const { userCrews, setActiveCrew, isLoadingCrews, leaveCrew, deleteCrew } = useCrew();
+
+  const handleLeave = async (crewId: string, crewName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await leaveCrew(crewId);
+      toast.success(`Left squad: ${crewName}`);
+    } catch {
+      toast.error("Failed to leave squad.");
+    }
+  };
+
+  const handleDelete = async (crewId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteCrew(crewId);
+      toast.success("Crew disbanded.");
+    } catch {
+      toast.error("Failed to disband crew.");
+    }
+  };
 
   if (isLoadingCrews) {
     return (
@@ -86,24 +118,30 @@ const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {userCrews.map((crew, idx) => (
-              <motion.button
+            {userCrews.map((crew, idx) => {
+              const isOwner = crew.ownerId === user?.uid;
+
+              return (
+              <motion.div
                 key={crew.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 onClick={() => setActiveCrew(crew)}
-                className="group text-left rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-primary/40 transition-all duration-700 p-10 flex flex-col h-[320px] justify-between relative overflow-hidden"
+                className="group text-left rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-primary/40 transition-all duration-700 p-10 flex flex-col h-[320px] justify-between relative overflow-hidden cursor-pointer shadow-xl"
               >
                 {/* Decoration */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
-                <div className="relative z-10 flex justify-between items-start">
+                <div className="relative z-10 flex justify-between items-start w-full">
                   <div className="w-16 h-16 rounded-[1.5rem] bg-black/40 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-700">
                     <span className="text-2xl">{crew.majorityCountry === "Luxembourg" ? "🇱🇺" : "🌍"}</span>
                   </div>
-                  <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-white/30 tracking-widest uppercase">
-                    Code: {crew.inviteCode}
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-white/30 tracking-widest uppercase">
+                      Code: {crew.inviteCode}
+                    </div>
                   </div>
                 </div>
 
@@ -129,8 +167,8 @@ const CrewsOverview = ({ onCreateClick, onJoinClick }: CrewsOverviewProps) => {
                     </span>
                   </div>
                 </div>
-              </motion.button>
-            ))}
+              </motion.div>
+            )})}
           </div>
         )}
       </div>

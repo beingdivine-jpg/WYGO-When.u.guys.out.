@@ -1,10 +1,18 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isInAppBrowser } from "@/lib/utils";
+import { AlertCircle, ExternalLink } from "lucide-react";
 
 const Login = () => {
-    const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+    const { 
+        signInWithGoogle, 
+        signInWithEmail, 
+        signUpWithEmail, 
+        resetPassword,
+        authError 
+    } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [authMode, setAuthMode] = useState<"login" | "signup">("login");
     const [email, setEmail] = useState("");
@@ -12,6 +20,13 @@ const Login = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
+    const [showInAppWarning, setShowInAppWarning] = useState(false);
+
+    useEffect(() => {
+        if (isInAppBrowser()) {
+            setShowInAppWarning(true);
+        }
+    }, []);
 
     const handleGoogleLogin = async () => {
         try {
@@ -107,7 +122,7 @@ const Login = () => {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-full space-y-10 text-center"
+                    className="w-full space-y-6 md:space-y-10 text-center"
                 >
                     <div className="space-y-4">
                         <motion.div
@@ -118,7 +133,7 @@ const Login = () => {
                         >
                             <span className="text-social-label text-[9px] tracking-widest">WYGO — when you guys out?</span>
                         </motion.div>
-                        <h1 className="text-6xl md:text-7xl font-display leading-tight">
+                        <h1 className="text-4xl md:text-7xl font-display leading-tight">
                             {authMode === "signup" ? (
                                 <>Join the <br/><span className="text-primary italic font-medium">movement.</span></>
                             ) : (
@@ -133,6 +148,34 @@ const Login = () => {
                     </div>
 
                     <div className="w-full space-y-6 pt-4">
+                        
+                        <AnimatePresence>
+                            {(showInAppWarning || authError) && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className={`${authError ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20'} border rounded-2xl p-4 text-left space-y-3`}
+                                >
+                                    <div className={`flex items-center gap-2 ${authError ? 'text-red-400' : 'text-amber-500'}`}>
+                                        <AlertCircle className="w-5 h-5" />
+                                        <span className="text-sm font-bold tracking-tight uppercase">
+                                            {authError ? 'Connection Error' : 'In-App Browser Detected'}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-white/60 leading-relaxed">
+                                        {authError || (
+                                            <>
+                                                Gmail and other apps block Google Sign-In. For the best experience, please tap 
+                                                <span className="text-white font-medium"> ... </span> or 
+                                                <span className="text-white font-medium"> Share </span> then 
+                                                <span className="text-white font-medium"> 'Open in Browser'</span>.
+                                            </>
+                                        )}
+                                    </p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                         
                         {/* Email/Password Form */}
                         <form onSubmit={handleEmailAuth} className="space-y-4 text-left">

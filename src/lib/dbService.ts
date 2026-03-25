@@ -11,7 +11,10 @@ import {
   updateDoc,
   arrayUnion,
   Timestamp,
-  addDoc
+  addDoc,
+  arrayRemove,
+  deleteDoc,
+  writeBatch
 } from 'firebase/firestore';
 
 export interface CrewData {
@@ -30,7 +33,7 @@ export interface SyncRound {
   crewId: string;
   startDate: any;
   durationMonths: number;
-  status: 'active' | 'completed';
+  status: 'active' | 'completed' | 'cancelled';
   createdAt: any;
 }
 
@@ -67,17 +70,19 @@ export const dbService = {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      throw new Error("Invalid invite code.");
+      throw new Error("SQUAD_NOT_FOUND");
     }
     
     const crewDoc = querySnapshot.docs[0];
     const crewData = crewDoc.data() as CrewData;
     
-    if (!crewData.memberIds.includes(userId)) {
-      await updateDoc(crewDoc.ref, {
-        memberIds: arrayUnion(userId)
-      });
+    if (crewData.memberIds.includes(userId)) {
+      throw new Error("ALREADY_MEMBER");
     }
+    
+    await updateDoc(crewDoc.ref, {
+      memberIds: arrayUnion(userId)
+    });
     
     return { ...crewData, memberIds: [...crewData.memberIds, userId] };
   },
@@ -88,10 +93,90 @@ export const dbService = {
     return querySnapshot.docs.map(doc => doc.data() as CrewData);
   },
 
+  async leaveCrew(crewId: string, userId: string) {
+    const crewRef = doc(db, 'crews', crewId);
+    const crewSnap = await getDoc(crewRef);
+    if (!crewSnap.exists()) return;
+    
+    const crewData = crewSnap.data() as CrewData;
+    const remainingMembers = crewData.memberIds.filter(id => id !== userId);
+    
+    if (remainingMembers.length === 0) {
+      // Last member is leaving - delete the crew
+      await deleteDoc(crewRef);
+      return;
+    }
+    
+    const updates: any = {
+      memberIds: arrayRemove(userId)
+    };
+    
+    // If owner is leaving, transfer ownership to the next member
+    if (crewData.ownerId === userId) {
+      updates.ownerId = remainingMembers[0];
+    }
+    
+    await updateDoc(crewRef, updates);
+  },
+
+  async deleteCrew(crewId: string) {
+    const batch = writeBatch(db);
+    const crewRef = doc(db, 'crews', crewId);
+    
+    // In a real production app, we would recursively delete subcollections 
+    // (syncRounds, responses) via a Cloud Function. 
+    // For this prototype, we'll delete the main document.
+    batch.delete(crewRef);
+    await batch.commit();
+  },
+
+  async removeMember(crewId: string, userId: string) {
+    const crewRef = doc(db, 'crews', crewId);
+    const crewSnap = await getDoc(crewRef);
+    if (!crewSnap.exists()) return;
+    const crewData = crewSnap.data() as CrewData;
+    
+    const batch = writeBatch(db);
+    
+    // 1. Remove from member list
+    batch.update(crewRef, {
+      memberIds: arrayRemove(userId)
+    });
+    
+    // 2. If there's an active round, delete their response
+    if (crewData.activeSyncRoundId) {
+      const responseRef = doc(db, 'crews', crewId, 'syncRounds', crewData.activeSyncRoundId, 'responses', userId);
+      batch.delete(responseRef);
+    }
+    
+    await batch.commit();
+  },
+
+  async updateCrewInfo(crewId: string, updates: Partial<CrewData>) {
+    const crewRef = doc(db, 'crews', crewId);
+    await updateDoc(crewRef, updates);
+  },
+
   // Sync Round Operations
   async startSyncRound(crewId: string, durationMonths: number) {
+    const crewRef = doc(db, 'crews', crewId);
+    const crewSnap = await getDoc(crewRef);
+    if (!crewSnap.exists()) throw new Error("CREW_NOT_FOUND");
+    const crewData = crewSnap.data() as CrewData;
+    
+    const batch = writeBatch(db);
+    
+    // 1. If there's an active round, mark it as completed
+    if (crewData.activeSyncRoundId) {
+      const oldRoundRef = doc(db, 'crews', crewId, 'syncRounds', crewData.activeSyncRoundId);
+      batch.update(oldRoundRef, { status: 'completed' });
+    }
+    
+    // 2. Create new round
     const roundsRef = collection(db, 'crews', crewId, 'syncRounds');
-    const newRound: Omit<SyncRound, 'id'> = {
+    const newRoundRef = doc(roundsRef);
+    const newRound: SyncRound = {
+      id: newRoundRef.id,
       crewId,
       startDate: serverTimestamp(),
       durationMonths,
@@ -99,14 +184,15 @@ export const dbService = {
       createdAt: serverTimestamp()
     };
     
-    const docRef = await addDoc(roundsRef, newRound);
+    batch.set(newRoundRef, newRound);
     
-    // Update crew with active round ID
-    await updateDoc(doc(db, 'crews', crewId), {
-      activeSyncRoundId: docRef.id
+    // 3. Update crew with active round ID
+    batch.update(crewRef, {
+      activeSyncRoundId: newRoundRef.id
     });
     
-    return { ...newRound, id: docRef.id } as SyncRound;
+    await batch.commit();
+    return newRound;
   },
 
   async getActiveSyncRound(crewId: string, roundId: string) {
@@ -122,7 +208,31 @@ export const dbService = {
     const roundsRef = collection(db, 'crews', crewId, 'syncRounds');
     const qSnapshot = await getDocs(roundsRef);
     return qSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SyncRound))
-      .sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  },
+
+  async cancelActiveRound(crewId: string) {
+    const crewRef = doc(db, 'crews', crewId);
+    const crewSnap = await getDoc(crewRef);
+    if (!crewSnap.exists()) return;
+    const crewData = crewSnap.data() as CrewData;
+    
+    const batch = writeBatch(db);
+    if (crewData.activeSyncRoundId) {
+      const roundRef = doc(db, 'crews', crewId, 'syncRounds', crewData.activeSyncRoundId);
+      batch.update(roundRef, { status: 'cancelled' });
+    }
+    
+    batch.update(crewRef, {
+      activeSyncRoundId: null
+    });
+    
+    await batch.commit();
+  },
+
+  async deleteSyncRound(crewId: string, roundId: string) {
+    const roundRef = doc(db, 'crews', crewId, 'syncRounds', roundId);
+    await deleteDoc(roundRef);
   },
 
   // Response Operations

@@ -58,22 +58,22 @@ const Onboarding = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-16"
+          className="space-y-8 md:space-y-16"
         >
           <div className="space-y-4">
             <span className="text-social-label">Welcome to WYGO</span>
-            <h2 className="text-5xl md:text-7xl font-display font-medium leading-tight">
+            <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
               Finish setting <br />
               <span className="text-primary italic">your profile.</span>
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-12">
+          <form onSubmit={handleSubmit} className="space-y-8 md:space-y-12">
             <div className="space-y-8">
               {/* Display Name (Read-only from Google) */}
               <div className="space-y-2 relative group">
                 <label className="text-social-label">Display Name</label>
-                <div className="w-full bg-transparent border-b-2 border-white/5 py-4 text-2xl font-display font-medium text-white/50 cursor-not-allowed">
+                <div className="w-full bg-transparent border-b-2 border-white/5 py-4 text-xl md:text-2xl font-display font-medium text-white/50 cursor-not-allowed">
                   {user?.displayName || "Anonymous"}
                 </div>
               </div>
@@ -88,7 +88,7 @@ const Onboarding = () => {
                   placeholder="@handle"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full bg-transparent border-b-2 border-white/10 py-4 text-3xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
+                  className="w-full bg-transparent border-b-2 border-white/10 py-4 text-2xl md:text-3xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
                 />
               </div>
 
@@ -99,7 +99,7 @@ const Onboarding = () => {
                   <select
                     value={formData.homeCountry}
                     onChange={(e) => setFormData({ ...formData, homeCountry: e.target.value })}
-                    className="w-full bg-transparent border-b-2 border-white/10 py-4 text-3xl font-display font-medium text-foreground appearance-none focus:outline-none focus:border-primary transition-all tracking-tight cursor-pointer"
+                    className="w-full bg-transparent border-b-2 border-white/10 py-4 text-2xl md:text-3xl font-display font-medium text-foreground appearance-none focus:outline-none focus:border-primary transition-all tracking-tight cursor-pointer"
                   >
                     {["Luxembourg", "France", "Germany", "Belgium", "Europe"].map(c => (
                       <option key={c} value={c} className="bg-[#120a16] text-white py-4">{c}</option>
