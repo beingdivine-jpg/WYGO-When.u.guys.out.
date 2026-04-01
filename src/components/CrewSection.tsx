@@ -27,7 +27,7 @@ import { dbService, UserResponse } from "@/lib/dbService";
 import React, { useState } from "react";
 
 const CrewSection = () => {
-  const { activeCrew, activeMembers, calculatedResults, activeResponses, pastRounds, leaveCrew, deleteCrew, removeMember, renameCrew } = useCrew();
+  const { activeCrew, activeMembers, pendingMembers, calculatedResults, activeResponses, pastRounds, leaveCrew, deleteCrew, removeMember, renameCrew, acceptMember, rejectMember } = useCrew();
   const { user } = useAuth();
   
   const [viewingPastRound, setViewingPastRound] = useState<any | null>(null);
@@ -75,6 +75,24 @@ const CrewSection = () => {
       toast.success(`${name} has been removed from the squad.`);
     } catch (error) {
       toast.error(`Failed to remove ${name}.`);
+    }
+  };
+
+  const handleAcceptMember = async (memberId: string, name: string) => {
+    try {
+      await acceptMember(activeCrew.id, memberId);
+      toast.success(`${name} is now part of the squad!`);
+    } catch (error) {
+      toast.error(`Failed to accept ${name}.`);
+    }
+  };
+
+  const handleRejectMember = async (memberId: string, name: string) => {
+    try {
+      await rejectMember(activeCrew.id, memberId);
+      toast.success(`Request from ${name} rejected.`);
+    } catch (error) {
+      toast.error(`Failed to reject ${name}.`);
     }
   };
 
@@ -171,6 +189,62 @@ const CrewSection = () => {
             </button>
           </div>
         </div>
+
+        {/* Pending Requests Section (Owner Only) */}
+        {isOwner && pendingMembers.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-8 rounded-[2rem] bg-primary/10 border border-primary/20 backdrop-blur-md space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-primary tracking-widest uppercase">Action Required</div>
+                <h3 className="text-2xl font-display font-medium text-white">Pending Requests</h3>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-bold">
+                {pendingMembers.length} Request{pendingMembers.length > 1 ? 's' : ''}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pendingMembers.map((pending) => (
+                <div 
+                  key={pending.uid}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between group hover:bg-white/10 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-xl overflow-hidden">
+                      {pending.photoURL ? (
+                        <img src={pending.photoURL} alt={pending.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{pending.displayName?.[0] || pending.username?.[0] || "👤"}</span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-white">{pending.displayName || pending.username}</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-tighter">{pending.homeCountry || "Unknown Location"}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => handleRejectMember(pending.uid, pending.displayName || pending.username)}
+                      className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
+                    >
+                      Reject
+                    </button>
+                    <button 
+                      onClick={() => handleAcceptMember(pending.uid, pending.displayName || pending.username)}
+                      className="px-4 py-2 rounded-lg bg-primary text-black font-bold text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Social Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -356,66 +430,104 @@ const CrewSection = () => {
         )}
 
         {/* Squad Settings & Danger Zone */}
-        <div className="space-y-8 pt-12 border-t border-white/10">
-          <div className="flex items-center gap-3 mb-6 ml-4">
-            <Settings className="w-5 h-5 text-white/30" />
-            <h3 className="text-sm font-bold tracking-widest uppercase text-white/30">Squad Settings</h3>
+        <div className="space-y-12 pt-24 border-t border-white/10">
+          <div className="flex items-center gap-4 mb-4 ml-4">
+            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500/60">
+               <Settings className="w-5 h-5" />
+            </div>
+            <div className="space-y-0.5">
+               <h3 className="text-xl font-display font-medium text-white/90 tracking-tight">Danger Zone</h3>
+               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/20">Handle with extreme care</p>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 flex flex-col justify-between group hover:border-white/20 transition-all duration-500">
-              <div>
-                <h4 className="text-xl font-display font-medium text-white mb-2 flex items-center gap-2"><LogOut className="w-4 h-4 text-white/50" /> Leave Squad</h4>
-                <p className="text-sm text-white/50 mb-8 leading-relaxed">
-                  Step away from this crew. You will need a new invite code from a current member to rejoin later.
-                  {isOwner && activeCrew.memberIds.length > 1 && " Since you're the owner, ownership will be transferred automatically."}
+            <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col justify-between group hover:border-white/10 transition-all duration-700 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 mb-6 group-hover:text-white transition-colors duration-700">
+                   <LogOut className="w-5 h-5" />
+                </div>
+                <h4 className="text-2xl font-display font-medium text-white mb-3">Leave Squad</h4>
+                <p className="text-base text-white/40 mb-10 leading-relaxed font-body">
+                  Step away from this crew. You can rejoin later with an invite link.
                 </p>
               </div>
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="px-6 py-4 w-full md:w-auto self-start rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                  <button className="px-8 py-4 w-full md:w-auto self-start rounded-full border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all font-bold text-[10px] uppercase tracking-[0.2em]">
                     Leave Squad
                   </button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-background border-white/10 text-white">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Leave {activeCrew.name}?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-white/60">
-                      You're about to leave this squad. You'll lose access to all sync history and future plans until re-invited.
+                <AlertDialogContent className="bg-background border-white/10 text-white rounded-[2rem] p-8 shadow-2xl backdrop-blur-xl">
+                  <AlertDialogHeader className="space-y-4">
+                    <AlertDialogTitle className="text-3xl font-display font-medium">
+                      {isOwner && activeCrew.memberIds.length === 1 
+                        ? "Disband Squad Permanently?" 
+                        : isOwner 
+                          ? "Transfer Ownership & Leave?" 
+                          : "Leave Squad?"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-white/50 text-lg leading-relaxed font-body">
+                      {isOwner && activeCrew.memberIds.length === 1 
+                        ? "You are the last member. This will delete the squad and all its sync history forever." 
+                        : isOwner 
+                          ? "You are the owner. Ownership will be transferred to another member automatically." 
+                          : "You will lose access to this crew and its availability data. You can always rejoin later with an invite link."}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleLeave} className="bg-red-500 hover:bg-red-600 text-white">Leave</AlertDialogAction>
+                  <AlertDialogFooter className="mt-10 gap-4">
+                    <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-2xl py-6 font-bold tracking-widest text-xs">Stay in Squad</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleLeave} 
+                      className="bg-red-500 hover:bg-red-600 text-white rounded-2xl py-6 font-bold tracking-widest text-xs"
+                    >
+                      {isOwner && activeCrew.memberIds.length > 1 ? "Leave & Transfer" : "Leave Squad"}
+                    </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
 
             {isOwner && (
-              <div className="p-8 rounded-[2rem] bg-red-500/5 border border-red-500/10 flex flex-col justify-between group hover:border-red-500/30 transition-all duration-500">
-                <div>
-                  <h4 className="text-xl font-display font-medium text-red-500 mb-2 flex items-center gap-2"><Trash2 className="w-4 h-4 text-red-500/60" /> Disband Squad</h4>
-                  <p className="text-sm text-red-500/60 mb-8 leading-relaxed">
-                    Permanently delete <strong>{activeCrew.name}</strong> and all its sync history. This action affects all members and cannot be undone.
+              <div className="p-10 rounded-[2.5rem] bg-red-500/[0.02] border border-red-500/10 flex flex-col justify-between group hover:border-red-500/20 transition-all duration-700 backdrop-blur-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
+                
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500/40 mb-6 group-hover:text-red-500 transition-colors duration-700">
+                     <Trash2 className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-2xl font-display font-medium text-red-500 mb-3">Disband Squad</h4>
+                  <p className="text-base text-red-500/40 mb-10 leading-relaxed font-body">
+                    Permanently delete <strong>{activeCrew.name}</strong> and all its sync history for everyone.
                   </p>
                 </div>
+                
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="px-6 py-4 w-full md:w-auto self-start rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                    <button className="px-8 py-4 w-full md:w-auto self-start rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-bold text-[10px] uppercase tracking-[0.2em]">
                       Disband Permanently
                     </button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-background border-white/10 text-white">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Disband {activeCrew.name}?</AlertDialogTitle>
-                      <AlertDialogDescription className="text-white/60">
-                        This is a destructive action. The squad, all its members, and all historical sync rounds will be deleted forever.
+                  <AlertDialogContent className="bg-background border-white/10 text-white rounded-[2rem] p-8 shadow-2xl backdrop-blur-xl">
+                    <AlertDialogHeader className="space-y-4">
+                      <AlertDialogTitle className="text-3xl font-display font-medium text-red-500">
+                        Disband {activeCrew.name}?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/50 text-lg leading-relaxed font-body">
+                        This is a destructive action. The squad, all its members, and all historical sync rounds will be deleted forever for everyone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white">Disband Squad</AlertDialogAction>
+                    <AlertDialogFooter className="mt-10 gap-4">
+                      <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-2xl py-6 font-bold tracking-widest text-xs">Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete} 
+                        className="bg-red-500 hover:bg-red-600 text-white rounded-2xl py-6 font-bold tracking-widest text-xs"
+                      >
+                        Disband Squad
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

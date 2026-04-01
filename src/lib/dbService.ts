@@ -23,6 +23,7 @@ export interface CrewData {
   majorityCountry: string;
   ownerId: string;
   memberIds: string[];
+  pendingMemberIds?: string[]; // Added for join requests
   inviteCode: string;
   activeSyncRoundId: string | null;
   createdAt: any;
@@ -56,6 +57,7 @@ export const dbService = {
       majorityCountry: country,
       ownerId: userId,
       memberIds: [userId],
+      pendingMemberIds: [],
       inviteCode,
       activeSyncRoundId: null,
       createdAt: serverTimestamp()
@@ -80,11 +82,30 @@ export const dbService = {
       throw new Error("ALREADY_MEMBER");
     }
     
+    if (crewData.pendingMemberIds?.includes(userId)) {
+      throw new Error("ALREADY_REQUESTED");
+    }
+    
     await updateDoc(crewDoc.ref, {
-      memberIds: arrayUnion(userId)
+      pendingMemberIds: arrayUnion(userId)
     });
     
-    return { ...crewData, memberIds: [...crewData.memberIds, userId] };
+    return { ...crewData, pendingMemberIds: [...(crewData.pendingMemberIds || []), userId] };
+  },
+
+  async acceptMember(crewId: string, userId: string) {
+    const crewRef = doc(db, 'crews', crewId);
+    await updateDoc(crewRef, {
+      memberIds: arrayUnion(userId),
+      pendingMemberIds: arrayRemove(userId)
+    });
+  },
+
+  async rejectMember(crewId: string, userId: string) {
+    const crewRef = doc(db, 'crews', crewId);
+    await updateDoc(crewRef, {
+      pendingMemberIds: arrayRemove(userId)
+    });
   },
 
   async getUserCrews(userId: string) {

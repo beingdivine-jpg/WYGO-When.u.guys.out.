@@ -12,6 +12,105 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCrew } from "@/contexts/CrewContext";
 import { toast } from "sonner";
 
+import { CheckCircle2 } from "lucide-react";
+
+const InviteScreen = ({ activeCrew, onClose }: { activeCrew: any, onClose: () => void }) => {
+  const [shared, setShared] = useState(false);
+  const inviteLink = `${window.location.origin}/join/${activeCrew.inviteCode}`;
+  const memberCount = activeCrew.memberIds?.length || 1;
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-background px-6 text-center"
+    >
+      <h1 className="text-3xl md:text-5xl font-display font-medium mb-3">
+        Invite your crew
+      </h1>
+      
+      <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase text-primary/80 mb-6 bg-primary/10 px-4 py-2 rounded-full inline-flex items-center gap-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        {memberCount <= 1 ? "Waiting for others to join..." : `${memberCount} people joined`}
+      </div>
+
+      <p className="text-base text-white/50 mb-8 max-w-sm font-body leading-relaxed h-12 flex items-center justify-center">
+        {shared ? (
+          <motion.span 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-white font-medium flex items-center justify-center gap-2 bg-white/10 px-5 py-2.5 rounded-full"
+          >
+            <CheckCircle2 className="w-4 h-4 text-green-400" /> Link sent — waiting for others to join
+          </motion.span>
+        ) : (
+          "Share this link so everyone can drop their availability."
+        )}
+      </p>
+
+      <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-6 backdrop-blur-md">
+        <span className="text-base md:text-xl font-display tracking-widest uppercase break-all font-bold text-white/90">
+          {inviteLink}
+        </span>
+      </div>
+
+      <div className="w-full max-w-sm space-y-3">
+        {navigator.share ? (
+          <div className="space-y-2">
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.share({ url: inviteLink });
+                  setShared(true);
+                } catch (e) {
+                  // Cancelled or failed
+                }
+              }}
+              className="w-full py-4 rounded-xl bg-primary text-black font-bold tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition-all text-sm"
+            >
+              Invite friends
+            </button>
+            <div className="text-[10px] font-bold text-white/20 text-center uppercase tracking-widest pb-1">
+              Takes 2 seconds
+            </div>
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(inviteLink);
+              toast.success("Link copied!");
+              setShared(true);
+            }}
+            className={`w-full py-4 rounded-xl border font-bold tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition-all text-sm ${
+              navigator.share 
+                ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                : "bg-primary border-primary text-black"
+            }`}
+          >
+            {navigator.share ? "Copy link" : "Invite friends"}
+          </button>
+          {!navigator.share && (
+            <div className="text-[10px] font-bold text-white/20 text-center uppercase tracking-widest pb-1">
+              Takes 2 seconds
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button
+        onClick={onClose}
+        className="mt-8 text-xs font-bold text-white/30 tracking-widest uppercase hover:text-white transition-colors p-4"
+      >
+        Skip for now
+      </button>
+    </motion.div>
+  );
+};
+
+
 const Index = () => {
   const { user, userProfile, signOut } = useAuth();
   const { 
@@ -26,6 +125,7 @@ const Index = () => {
   const [activeNav, setActiveNav] = useState("sync");
   const [appState, setAppState] = useState<"overview" | "create" | "join">("overview");
   const [isStartingRound, setIsStartingRound] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
 
   // ... (auto-scroll effect remains same)
   useEffect(() => {
@@ -34,12 +134,26 @@ const Index = () => {
 
   const handleCreateComplete = async (data: any) => {
     await createCrew(data);
+    setShowInvite(true);
     setAppState("overview");
   };
 
   const handleJoinComplete = async (data: any) => {
-    await joinCrew(data.code);
-    setAppState("overview");
+    try {
+      await joinCrew(data.code);
+      toast.success("Request sent to squad owner!");
+      setAppState("overview");
+    } catch (error: any) {
+      if (error.message === "ALREADY_REQUESTED") {
+        toast.error("You've already requested to join this squad.");
+      } else if (error.message === "ALREADY_MEMBER") {
+        toast.error("You're already a member of this squad.");
+      } else if (error.message === "SQUAD_NOT_FOUND") {
+        toast.error("Squad not found. Check the code.");
+      } else {
+        toast.error("Failed to join squad.");
+      }
+    }
   };
 
   const handleStartSync = async () => {
@@ -62,6 +176,10 @@ const Index = () => {
         onComplete={appState === "create" ? handleCreateComplete : handleJoinComplete}
       />
     );
+  }
+
+  if (showInvite && activeCrew) {
+    return <InviteScreen activeCrew={activeCrew} onClose={() => setShowInvite(false)} />;
   }
 
   if (activeCrew && isLoadingRound) {
@@ -142,7 +260,7 @@ const Index = () => {
                     className="flex items-center gap-4"
                   >
                     <div className="w-1.5 h-1.5 bg-primary glow-lime animate-pulse" />
-                    <span className="text-label-surgical tracking-widest md:tracking-[0.8em] break-words whitespace-normal max-w-full block">
+                    <span className="text-label-surgical tracking-[0.3em] md:tracking-[0.8em] break-words whitespace-normal max-w-full block">
                       {activeNav === 'sync' ? 'Crew Connected' : activeNav === 'results' ? 'Moments Found' : 'Squad Hub'}
                     </span>
                   </motion.div>

@@ -33,7 +33,12 @@
   }
 
   html, body, #root {
-    @apply overflow-x-hidden w-full max-w-full m-0 p-0;
+    @apply w-full max-w-full m-0 p-0;
+  }
+
+  /* overflow-x-hidden only on body — avoids disrupting fixed-positioning for html/#root */
+  body {
+    overflow-x: clip;
   }
 
   body {
@@ -72,7 +77,8 @@
   }
 
   .button-premium {
-    @apply relative px-10 py-5 rounded-full font-display font-medium text-lg transition-all duration-700 bg-primary text-black shadow-[0_10px_40px_#f4569526] hover:shadow-[0_20px_60px_#f456954d] hover:-translate-y-1 hover:scale-[1.02] active:scale-95 overflow-hidden;
+    /* Mobile-first: compact. md: restores the full desktop weight. */
+    @apply relative px-6 py-4 md:px-10 md:py-5 rounded-full font-display font-medium text-base md:text-lg transition-all duration-700 bg-primary text-black shadow-[0_10px_40px_#f4569526] hover:shadow-[0_20px_60px_#f456954d] hover:-translate-y-1 hover:scale-[1.02] active:scale-95 overflow-hidden;
   }
 
   .button-premium-outline {

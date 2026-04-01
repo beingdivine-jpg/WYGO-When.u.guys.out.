@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { type AvailabilityStatus, statusConfig } from "@/types";
 import { useCrew } from "@/contexts/CrewContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,10 +20,70 @@ import {
 
 const statuses: AvailabilityStatus[] = ["free", "maybe", "busy", "unknown"];
 
+const LiveResultsBar = ({ results }: { results: any[] }) => {
+  const best = results[0];
+
+  return (
+    <div className="sticky top-0 z-50 w-full h-12 bg-black/80 backdrop-blur-xl border-b border-primary/20 flex justify-center items-center shadow-[0_4px_30px_rgba(244,86,149,0.1)]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={best?.id || "empty"}
+          initial={{ y: -10, opacity: 0 }}
+          animate={
+            best
+              ? { y: 0, opacity: 1, scale: [1, 1.03, 1] }
+              : { y: 0, opacity: 1 }
+          }
+          exit={{ y: -10, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center gap-2"
+        >
+          {best ? (
+            <>
+              <Zap className="w-3.5 h-3.5 fill-primary text-primary" />
+              <span className="text-xs md:text-sm font-bold text-white tracking-wide">
+                Best option: {best.dateRange}
+              </span>
+              {best.holidayBoost && (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[#F45695]">
+                  ✨ Long weekend
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">
+              No strong match yet
+            </span>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const isEqualAvailability = (
+  a: Record<string, AvailabilityStatus>,
+  b: Record<string, AvailabilityStatus>
+) => {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+
+  for (const key of aKeys) {
+    if (a[key] !== b[key]) return false;
+  }
+
+  return true;
+};
+
 const SquadSyncSection = () => {
   const { user } = useAuth();
   const { activeCrew, activeSyncRound, activeResponses, submitWeekendResponse, syncDraft, setSyncDraft, clearSyncDraft, cancelActiveRound } = useCrew();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const isInitializedRef = useRef(false);
+  const isEditingRef = useRef(false);
+  const lastSavedRef = useRef<Record<string, AvailabilityStatus>>({});
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isOwner = activeCrew?.ownerId === user?.uid;
 
   const handleCancelRound = async () => {
@@ -46,17 +106,21 @@ const SquadSyncSection = () => {
 
   const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({});
 
+  const myResponseFromDb = activeResponses.find(r => r.userId === user?.uid)?.availability || {};
+  const myResponseJson = JSON.stringify(myResponseFromDb);
+
   // Initialize availability from Draft, then Response, then Default
   useEffect(() => {
-    // Only run if we have weekends but no availability has been set yet
-    if (weekends.length > 0 && Object.keys(availability).length === 0) {
-      if (syncDraft) {
+    if (weekends.length > 0 && !isInitializedRef.current) {
+      const myResponse = activeResponses.find(r => r.userId === user?.uid)?.availability;
+      if (myResponse) {
+        lastSavedRef.current = myResponse as Record<string, AvailabilityStatus>;
+      }
+
+      if (syncDraft && Object.keys(syncDraft).length > 0) {
         setAvailability(syncDraft as Record<string, AvailabilityStatus>);
-      } else if (activeResponses.length > 0 && user?.uid) {
-        const myResponse = activeResponses.find(r => r.userId === user.uid);
-        if (myResponse) {
-          setAvailability(myResponse.availability as Record<string, AvailabilityStatus>);
-        }
+      } else if (myResponse) {
+        setAvailability(myResponse as Record<string, AvailabilityStatus>);
       } else {
         const init: Record<string, AvailabilityStatus> = {};
         weekends.forEach((w) => {
@@ -64,72 +128,140 @@ const SquadSyncSection = () => {
         });
         setAvailability(init);
       }
+      isInitializedRef.current = true;
     }
-  }, [weekends, activeResponses, user?.uid, syncDraft, availability]);
+  }, [weekends, activeResponses, user?.uid, syncDraft]);
 
-  // Update draft in context whenever availability changes (only after it's been initialized)
+  // Handle external real-time updates safely
   useEffect(() => {
-    if (Object.keys(availability).length > 0) {
-      // Comparison to avoid infinite loops or unnecessary context updates
+    if (!isInitializedRef.current) return;
+    const lastSavedJson = JSON.stringify(lastSavedRef.current);
+    
+    // If no active local edits exist, but DB state changed, sync from DB
+    if (!isEditingRef.current && myResponseJson !== lastSavedJson) {
+      if (Object.keys(myResponseFromDb).length > 0) {
+        setAvailability(myResponseFromDb as Record<string, AvailabilityStatus>);
+        lastSavedRef.current = myResponseFromDb as Record<string, AvailabilityStatus>;
+      }
+    }
+  }, [myResponseJson, availability]);
+
+  // Update draft in context whenever availability changes (locaStorage persistence)
+  useEffect(() => {
+    if (Object.keys(availability).length > 0 && isInitializedRef.current) {
       if (JSON.stringify(availability) !== JSON.stringify(syncDraft)) {
         setSyncDraft(availability);
       }
     }
   }, [availability, syncDraft, setSyncDraft]);
 
+  // Debounced Auto-Save
+  useEffect(() => {
+    if (!isInitializedRef.current || Object.keys(availability).length === 0) return;
+
+    if (isEqualAvailability(availability, lastSavedRef.current)) {
+      return; 
+    }
+
+    setSaveStatus("saving");
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const snapshotBeforeSave = availability;
+        await submitWeekendResponse(snapshotBeforeSave);
+
+        // Only mark saved if nothing changed during request
+        if (isEqualAvailability(snapshotBeforeSave, availability)) {
+          lastSavedRef.current = snapshotBeforeSave;
+          setSaveStatus("saved");
+          
+          isEditingRef.current = false;
+
+          setTimeout(() => {
+            setSaveStatus("idle");
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Auto-save failed", error);
+        toast.error("Failed to auto-save markers.");
+        setSaveStatus("idle");
+      }
+    }, 700);
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [availability, submitWeekendResponse]);
+
   const cycleStatus = (weekendId: string) => {
+    isEditingRef.current = true;
     const current = availability[weekendId] || "unknown";
     const idx = statuses.indexOf(current);
     const next = statuses[(idx + 1) % statuses.length];
     setAvailability((prev) => ({ ...prev, [weekendId]: next }));
   };
 
-  const handleSync = async () => {
-    setIsSubmitting(true);
-    try {
-      await submitWeekendResponse(availability);
-      clearSyncDraft();
-      toast.success("Squad markers locked in!");
-    } catch (error) {
-      console.error("Sync failed", error);
-      toast.error("Failed to save markers. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDiscard = () => {
-    clearSyncDraft();
-    // Re-trigger the initial values from activeResponses
-    const myResponse = activeResponses.find(r => r.userId === user?.uid);
-    if (myResponse) {
-      setAvailability(myResponse.availability as Record<string, AvailabilityStatus>);
-    } else if (weekends.length > 0) {
-      const init: Record<string, AvailabilityStatus> = {};
-      weekends.forEach((w) => {
-        init[w.id] = "unknown";
-      });
-      setAvailability(init);
-    }
-  };
-
   const markedCount = Object.values(availability).filter(s => s !== "unknown").length;
-  
-  // Check if draft is truly different from the last synced response
-  const myLastResponse = activeResponses.find(r => r.userId === user?.uid)?.availability || {};
-  const hasUnsavedChanges = JSON.stringify(availability) !== JSON.stringify(myLastResponse) && Object.keys(availability).length > 0;
+
+  const mergedResponses = useMemo(() => {
+    if (!user || !activeCrew) return activeResponses;
+
+    const userId = user.uid;
+    let hasUser = false;
+
+    const updated = activeResponses.map((r: any) => {
+      if (r.userId === userId) {
+        hasUser = true;
+        return {
+          ...r,
+          availability,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return r;
+    });
+
+    if (!hasUser) {
+      updated.push({
+        userId,
+        displayName: "You",
+        availability,
+        updatedAt: new Date().toISOString()
+      } as any);
+    }
+
+    return updated;
+  }, [activeResponses, availability, user?.uid, activeCrew?.id]);
+
+  const liveResults = useMemo(() => {
+    if (!activeCrew || !activeSyncRound || !mergedResponses || mergedResponses.length === 0) return [];
+    
+    return syncEngine.calculateResults(
+      mergedResponses as any,
+      activeCrew,
+      activeSyncRound.durationMonths,
+      activeSyncRound.startDate?.toDate ? activeSyncRound.startDate.toDate() : new Date(activeSyncRound.startDate as any)
+    );
+  }, [mergedResponses, activeCrew, activeSyncRound]);
 
   if (!activeSyncRound) return null;
 
   return (
-    <section className="pt-4 pb-48 md:py-48 px-4 md:px-8 bg-background text-white min-h-screen relative overflow-hidden selection:bg-primary/20">
+    <section className="pb-48 md:pb-48 bg-background text-white min-h-screen relative selection:bg-primary/20 flex flex-col">
+      <LiveResultsBar results={liveResults} />
+      
+      <div className="flex-1 pt-4 md:pt-16 px-4 md:px-8 relative w-full overflow-clip">
       {/* Decorative Atmospheric Glows - pointer-events-none to prevent click blocking */}
       <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[20%] -left-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-8 md:gap-24 items-start">
-        {/* Left Column: Context & Instructions */}
-        <div className="w-full md:w-1/3 flex flex-col gap-6 md:gap-16 md:sticky md:top-32 h-fit">
+        {/* Left Column: Context & Instructions — appears SECOND on mobile, first on desktop */}
+        <div className="w-full md:w-1/3 flex flex-col gap-6 md:gap-16 md:sticky md:top-32 h-fit order-2 md:order-1">
           <div className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -140,8 +272,8 @@ const SquadSyncSection = () => {
             </motion.div>
 
             <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
-              {hasUnsavedChanges ? (
-                <>Your <span className="text-primary italic">draft</span> markers.</>
+              {saveStatus === 'saving' ? (
+                <>Saving <span className="text-primary italic">draft</span> markers...</>
               ) : (
                 <>Mark your <span className="text-secondary italic">weekends.</span></>
               )}
@@ -321,92 +453,55 @@ const SquadSyncSection = () => {
           })}
 
           <AnimatePresence>
-            {markedCount > 0 && (
+            {saveStatus !== "idle" && (
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="pt-12"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="mt-6 flex justify-center"
               >
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <button 
-                      onClick={handleSync}
-                      disabled={isSubmitting}
-                      className="button-premium flex-1 shadow-[0_20px_50px_rgba(244,86,149,0.4)] disabled:opacity-50"
-                    >
-                      {isSubmitting ? "Updating..." : hasUnsavedChanges ? "Save to Squad Sync" : "Sync with the Crew"}
-                    </button>
-                    {hasUnsavedChanges && (
-                      <button 
-                        onClick={handleDiscard}
-                        disabled={isSubmitting}
-                        className="px-6 py-4 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 w-full sm:w-auto"
-                      >
-                        Discard Changes
-                      </button>
-                    )}
-                  </div>
+                <div className="bg-black/90 backdrop-blur-md border border-white/10 px-5 py-3 rounded-full flex items-center gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                  {saveStatus === "saving" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-white/70">Saving to Squad Sync...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-green-400" />
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-green-400">Locked in</span>
+                    </>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
+
+      {/* View Sync Results Floater (Always visible when there is availability data, unless saving) */}
       <AnimatePresence>
-        {hasUnsavedChanges && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-24 inset-x-0 mx-auto z-[60] w-[calc(100%-2rem)] max-w-sm"
+        {saveStatus !== "saving" && Object.keys(availability).length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            className="fixed bottom-8 md:bottom-12 inset-x-0 flex justify-center z-[50]"
           >
-            <div className="bg-black/90 backdrop-blur-3xl border border-white/10 rounded-2xl p-3 md:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3 md:gap-4 ring-1 ring-white/5">
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  {isSubmitting ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <AlertCircle className="w-4 h-4 md:w-5 md:h-5" />}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[8px] md:text-[10px] font-bold tracking-widest text-primary uppercase">Draft Mode</div>
-                  <div className="text-[10px] md:text-xs text-white/60 font-medium truncate">
-                    {isSubmitting ? "Syncing..." : "Unsaved markers"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-1.5 md:gap-2 shrink-0">
-                <button 
-                  onClick={handleDiscard}
-                  disabled={isSubmitting}
-                  className="px-3 md:px-4 py-2 rounded-lg bg-white/5 text-[8px] md:text-[10px] font-bold tracking-widest text-white/40 hover:text-white uppercase transition-colors disabled:opacity-50"
-                >
-                  Discard
-                </button>
-                <button 
-                  onClick={handleSync}
-                  disabled={isSubmitting}
-                  className="px-4 md:px-6 py-2 rounded-lg bg-primary text-black text-[8px] md:text-[10px] font-bold tracking-widest uppercase hover:scale-105 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
-                >
-                  {isSubmitting ? "Syncing" : "Save"}
-                </button>
-              </div>
-            </div>
+             <button 
+               onClick={() => {
+                  const resultsTab = document.querySelector('[data-tab="results"]') as HTMLButtonElement | null;
+                  if (resultsTab) resultsTab.click();
+               }}
+               className="bg-black/95 backdrop-blur-xl border border-primary/40 shadow-[0_10px_40px_rgba(244,86,149,0.3)] rounded-full px-8 py-4 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all pointer-events-auto cursor-pointer group hover:bg-black"
+             >
+                <Zap className="w-4 h-4 text-primary group-hover:fill-primary transition-all delay-75" />
+                <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white uppercase">View Sync Results</span>
+             </button>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {!hasUnsavedChanges && Object.keys(availability).length > 0 && (
-        <div className="fixed bottom-32 inset-x-0 flex justify-center z-[60] transition-opacity animate-in fade-in slide-in-from-bottom-4">
-           <button 
-             onClick={() => {
-                // Find BottomNav and click the 'results' tab programmatically, or use a context navigation if available
-                const resultsTab = document.querySelector('[data-tab="results"]') as HTMLButtonElement | null;
-                if (resultsTab) resultsTab.click();
-             }}
-             className="bg-black/90 backdrop-blur-xl border border-primary/40 shadow-[0_10px_40px_rgba(244,86,149,0.3)] rounded-full px-8 py-4 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all pointer-events-auto cursor-pointer group"
-           >
-              <Zap className="w-4 h-4 text-primary group-hover:fill-primary transition-all delay-75" />
-              <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white uppercase">View Sync Results</span>
-           </button>
-        </div>
-      )}
+      </div>
     </section>
   );
 };

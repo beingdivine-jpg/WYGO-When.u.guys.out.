@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Crew, GoldenWindow } from '../types';
 import {
     doc,
@@ -29,6 +29,7 @@ interface CrewContextType {
     activeResponses: UserResponse[];
     calculatedResults: GoldenWindow[];
     activeMembers: any[];
+    pendingMembers: any[];
     createCrew: (data: any) => Promise<CrewData>;
     joinCrew: (code: string) => Promise<CrewData>;
     startNewSyncRound: (duration: number) => Promise<void>;
@@ -41,6 +42,8 @@ interface CrewContextType {
     removeMember: (crewId: string, userId: string) => Promise<void>;
     cancelActiveRound: (crewId: string) => Promise<void>;
     renameCrew: (crewId: string, newName: string) => Promise<void>;
+    acceptMember: (crewId: string, userId: string) => Promise<void>;
+    rejectMember: (crewId: string, userId: string) => Promise<void>;
 }
 
 const CrewContext = createContext<CrewContextType>({
@@ -54,6 +57,7 @@ const CrewContext = createContext<CrewContextType>({
     activeResponses: [],
     calculatedResults: [],
     activeMembers: [],
+    pendingMembers: [],
     createCrew: async () => { throw new Error("Not implemented"); },
     joinCrew: async () => { throw new Error("Not implemented"); },
     startNewSyncRound: async () => {},
@@ -65,7 +69,9 @@ const CrewContext = createContext<CrewContextType>({
     deleteCrew: async () => {},
     removeMember: async () => {},
     cancelActiveRound: async () => {},
-    renameCrew: async () => {}
+    renameCrew: async () => {},
+    acceptMember: async () => {},
+    rejectMember: async () => {}
 });
 
 export const useCrew = () => useContext(CrewContext);
@@ -83,6 +89,7 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [activeResponses, setActiveResponses] = useState<UserResponse[]>([]);
     const [calculatedResults, setCalculatedResults] = useState<GoldenWindow[]>([]);
     const [activeMembers, setActiveMembers] = useState<any[]>([]);
+    const [pendingMembers, setPendingMembers] = useState<any[]>([]);
     const [syncDraft, setSyncDraftState] = useState<Record<string, string> | null>(() => {
         const saved = localStorage.getItem('wygo_sync_draft');
         return saved ? JSON.parse(saved) : null;
@@ -156,6 +163,20 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchMembers();
     }, [activeCrew?.memberIds]);
 
+    // 1b. Listen for Pending Members
+    useEffect(() => {
+        if (!activeCrew || !activeCrew.pendingMemberIds || activeCrew.pendingMemberIds.length === 0) {
+            setPendingMembers([]);
+            return;
+        }
+
+        const fetchPendingMembers = async () => {
+            const members = await dbService.getUserProfiles(activeCrew.pendingMemberIds!);
+            setPendingMembers(members);
+        };
+        fetchPendingMembers();
+    }, [activeCrew?.pendingMemberIds]);
+
     // 2. Listen for Rounds History
     useEffect(() => {
         if (!activeCrew) {
@@ -228,11 +249,8 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const joinCrew = async (code: string) => {
         if (!user) throw new Error("Must be logged in");
         const joinedCrew = await dbService.joinCrewByCode(code, user.uid);
-        setUserCrews(prev => {
-           if (prev.find(c => c.id === joinedCrew.id)) return prev;
-           return [joinedCrew, ...prev];
-        });
-        setActiveCrew(joinedCrew);
+        // Note: joinedCrew will now be in pending state in DB, 
+        // but we return it for the UI to know it exists or show "Request Sent"
         return joinedCrew;
     };
 
@@ -297,6 +315,53 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const acceptMember = async (crewId: string, userId: string) => {
+        await dbService.acceptMember(crewId, userId);
+        // UI will update via onSnapshot listener in useEffect (Listen for Crews)
+    };
+
+    const rejectMember = async (crewId: string, userId: string) => {
+        await dbService.rejectMember(crewId, userId);
+        // UI will update via onSnapshot listener
+    };
+
+    // 4. Auto-create Sync Round if none exists
+    const hasCreatedRoundRef = useRef(false);
+
+    // Reset ref when switching crews so we can fire again if needed
+    useEffect(() => {
+        if (activeCrew?.id) {
+            hasCreatedRoundRef.current = false;
+        }
+    }, [activeCrew?.id]);
+
+    useEffect(() => {
+        const ensureSyncRound = async () => {
+            if (!activeCrew || hasCreatedRoundRef.current) return;
+
+            if (!activeCrew.activeSyncRoundId) {
+                hasCreatedRoundRef.current = true;
+
+                try {
+                    const crewRef = doc(db, "crews", activeCrew.id);
+                    const freshSnap = await getDoc(crewRef);
+                    const freshData = freshSnap.data();
+
+                    // EXTRA SAFETY: re-check against current state as well
+                    if (!freshData?.activeSyncRoundId && !activeCrew.activeSyncRoundId) {
+                        await startNewSyncRound(3);
+                    }
+                } catch (err) {
+                    console.error("Auto-create sync round failed:", err);
+                    hasCreatedRoundRef.current = false;
+                }
+            }
+        };
+
+        ensureSyncRound();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeCrew?.id, activeCrew?.activeSyncRoundId]);
+
     // Recalculate results whenever responses OR draft changes
     useEffect(() => {
         if (activeCrew && activeSyncRound) {
@@ -329,7 +394,7 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [activeResponses, syncDraft, activeCrew, activeSyncRound, user, userProfile]);
 
-    const submitWeekendResponse = async (availability: Record<string, string>) => {
+    const submitWeekendResponse = useCallback(async (availability: Record<string, string>) => {
         if (!user || !activeCrew || !activeSyncRound || !userProfile) return;
         
         await dbService.submitResponse(
@@ -345,7 +410,7 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setActiveResponses(updatedResponses);
         
         // Recalculate results - this will be handled by the effect above since updatedResponses is set
-    };
+    }, [user, activeCrew, activeSyncRound, userProfile]);
 
     return (
         <CrewContext.Provider value={{
@@ -370,7 +435,10 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
             deleteCrew,
             removeMember,
             cancelActiveRound,
-            renameCrew
+            renameCrew,
+            acceptMember,
+            rejectMember,
+            pendingMembers
         }}>
             {children}
         </CrewContext.Provider>
