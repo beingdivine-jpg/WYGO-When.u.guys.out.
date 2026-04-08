@@ -36,10 +36,10 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
         and `style={{ maxWidth: 'calc(100vw - 24px)' }}` as the hard cap that prevents
         the pill from ever being wider than the viewport minus 24px total margin.
       */
-      className="fixed bottom-6 md:bottom-12 inset-x-0 z-[100] pointer-events-none flex justify-center"
+      className="fixed bottom-0 inset-x-0 z-[100] pointer-events-none flex justify-center pb-safe"
     >
       <div
-        className="bg-white/5 backdrop-blur-2xl border border-white/10 p-1.5 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/5 w-max overflow-hidden"
+        className="editorial-card p-2 md:p-2 rounded-full pointer-events-auto flex items-stretch gap-1 md:gap-2 shadow-lg ring-1 ring-black/5 w-max overflow-hidden mb-3 md:mb-6"
         style={{ maxWidth: "calc(100vw - 24px)" }}
       >
         {navItems.map((item) => {
@@ -51,7 +51,7 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
               onClick={() => onNavigate(item.id)}
               aria-label={item.label}
               className={`relative flex items-center gap-2 md:gap-3 px-4 md:px-8 py-3 md:py-4 rounded-full transition-all duration-500 group ${
-                isActive ? "bg-primary text-black" : "text-white/40 hover:text-white hover:bg-white/5"
+                isActive ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
             >
               {isActive && (
@@ -80,7 +80,7 @@ const BottomNav = ({ active, onNavigate }: BottomNavProps) => {
               </span>
 
               {isActive && (
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-black rounded-full" />
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
               )}
             </button>
           );

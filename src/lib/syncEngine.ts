@@ -45,7 +45,7 @@ export const syncEngine = {
     const results: GoldenWindow[] = [];
     
     const memberCount = responses.length;
-    if (memberCount === 0) return [];
+    if (memberCount < 2) return [];
 
     weekends.forEach(w => {
       let freeCount = 0;

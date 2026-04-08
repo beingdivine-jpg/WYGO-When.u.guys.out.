@@ -43,16 +43,14 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-background text-foreground relative overflow-hidden selection:bg-primary/20">
-            {/* Atmospheric Background */}
-            <div className="absolute inset-0 gradient-warm opacity-40" />
+        <div className="min-h-[100dvh] flex flex-col bg-background text-foreground relative overflow-hidden selection:bg-primary/20">
 
-            <div className="flex-1 flex flex-col relative z-10 max-w-5xl mx-auto w-full p-8 md:p-24 justify-center">
+            <div className="flex-1 flex flex-col relative z-10 max-w-5xl mx-auto w-full px-6 py-8 md:px-24 md:py-24 justify-center">
                 {/* Header / Nav */}
-                <div className="absolute top-8 md:top-12 left-6 md:left-24 right-6 md:right-24 flex justify-between items-center">
+                <div className="flex justify-between items-center mb-8 md:mb-16">
                     <button
                         onClick={prevStep}
-                        className="flex items-center gap-2 text-white/40 hover:text-white transition-all group"
+                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all group px-4 py-2 bg-secondary rounded-full"
                     >
                         {type === "create" && step > 1 ? (
                             <>
@@ -73,7 +71,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                             {[1, 2, 3].map((s) => (
                                 <div
                                     key={s}
-                                    className={`h-1 rounded-full transition-all duration-700 ${s === step ? "w-12 bg-primary" : "w-4 bg-white/10"}`}
+                                    className={`h-1 rounded-full transition-all duration-700 ${s === step ? "w-12 bg-primary" : "w-4 bg-border"}`}
                                 />
                             ))}
                         </div>
@@ -97,7 +95,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                             <span className="text-social-label">Step 01 / Group Identity</span>
                                             <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                                 What shall we call <br />
-                                                <span className="text-primary italic">your crew?</span>
+                                                <span className="text-primary">your crew?</span>
                                             </h2>
                                         </div>
 
@@ -108,9 +106,9 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                                 placeholder="The Weekend Legends..."
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                className="w-full bg-transparent border-b-2 border-white/10 py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
+                                                className="w-full bg-transparent border-b-2 border-border py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-all tracking-tight"
                                             />
-                                            <div className="mt-4 text-[10px] font-medium text-white/20 tracking-wider">
+                                            <div className="mt-4 text-[10px] font-medium text-muted-foreground tracking-wider uppercase">
                                                 Give your squad a name that sticks.
                                             </div>
                                         </div>
@@ -131,7 +129,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                             <span className="text-social-label">Step 02 / Planning Horizon</span>
                                             <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                                 How far ahead are <br />
-                                                <span className="text-primary italic">we looking?</span>
+                                                <span className="text-primary">we looking?</span>
                                             </h2>
                                         </div>
 
@@ -144,12 +142,12 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                                 <button
                                                     key={m.val}
                                                     onClick={() => setFormData({ ...formData, duration: m.val })}
-                                                    className={`p-10 rounded-[2rem] text-left transition-all duration-500 border ${formData.duration === m.val ? "bg-primary border-primary text-black shadow-xl scale-[1.02]" : "bg-white/5 border-white/5 hover:border-white/10 text-white/60"}`}
+                                                    className={`p-6 md:p-10 rounded-[2rem] text-left transition-all duration-500 border ${formData.duration === m.val ? "bg-primary border-primary text-white shadow-md scale-[1.02]" : "editorial-card hover:border-primary/40 text-muted-foreground shadow-sm"}`}
                                                 >
-                                                    <div className="text-xl md:text-2xl font-display font-bold mb-1">
+                                                    <div className={`text-xl md:text-2xl font-display font-bold mb-1 ${formData.duration === m.val ? "text-white" : "text-foreground"}`}>
                                                         {m.label}
                                                     </div>
-                                                    <div className={`text-[10px] md:text-xs font-medium ${formData.duration === m.val ? "text-black/60" : "text-white/30"}`}>
+                                                    <div className={`text-[10px] md:text-xs font-medium ${formData.duration === m.val ? "text-white/80" : "text-muted-foreground"}`}>
                                                         {m.desc}
                                                     </div>
                                                 </button>
@@ -171,21 +169,31 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                             <span className="text-social-label">Step 03 / Home Base</span>
                                             <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                                 Where is the squad <br />
-                                                <span className="text-primary italic">mostly based?</span>
+                                                <span className="text-primary">mostly based?</span>
                                             </h2>
                                         </div>
 
-                                        <div className="relative group max-w-2xl">
-                                            <select
-                                                value={formData.country}
-                                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                                className="w-full bg-transparent border-b-2 border-white/10 py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground appearance-none focus:outline-none focus:border-primary transition-all tracking-tight cursor-pointer"
-                                            >
-                                                {["Luxembourg", "France", "Germany", "Belgium", "Europe"].map(c => (
-                                                    <option key={c} value={c} className="bg-[#120a16] text-white py-4">{c}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-0 bottom-10 w-8 h-8 text-white/40 pointer-events-none" />
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {[
+                                                { val: "Luxembourg", emoji: "🇱🇺" },
+                                                { val: "France", emoji: "🇫🇷" },
+                                                { val: "Germany", emoji: "🇩🇪" },
+                                                { val: "Belgium", emoji: "🇧🇪" },
+                                                { val: "Europe", emoji: "🌍" },
+                                            ].map((c) => (
+                                                <button
+                                                    key={c.val}
+                                                    onClick={() => setFormData({ ...formData, country: c.val })}
+                                                    className={`p-6 md:p-8 rounded-[2rem] text-left transition-all duration-500 border flex items-center gap-4 ${
+                                                        formData.country === c.val
+                                                            ? "bg-primary border-primary text-white shadow-md scale-[1.02]"
+                                                            : "editorial-card hover:border-primary/40 text-muted-foreground shadow-sm"
+                                                    }`}
+                                                >
+                                                    <span className="text-2xl">{c.emoji}</span>
+                                                    <div className={`text-lg md:text-xl font-display font-bold ${formData.country === c.val ? "text-white" : "text-foreground"}`}>{c.val}</div>
+                                                </button>
+                                            ))}
                                         </div>
 
                                         <button
@@ -210,7 +218,7 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                     <span className="text-social-label">Join a Crew</span>
                                     <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
                                         Enter your <br />
-                                        <span className="text-primary italic">secret code.</span>
+                                        <span className="text-primary">secret code.</span>
                                     </h2>
                                 </div>
 
@@ -221,9 +229,9 @@ const OnboardingFlows = ({ type, onBack, onComplete }: OnboardingFlowsProps) => 
                                         placeholder="e.g. WYGO-7721"
                                         value={formData.code}
                                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                                        className="w-full bg-transparent border-b-2 border-white/10 py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground placeholder:text-white/10 focus:outline-none focus:border-primary transition-all tracking-tight"
+                                        className="w-full bg-transparent border-b-2 border-border py-4 md:py-8 text-3xl md:text-6xl font-display font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-all tracking-tight uppercase"
                                     />
-                                    <div className="mt-4 text-[10px] font-medium text-white/20 tracking-wider">
+                                    <div className="mt-4 text-[10px] font-medium text-muted-foreground tracking-wider uppercase">
                                         Provided by your crew captain.
                                     </div>
                                 </div>

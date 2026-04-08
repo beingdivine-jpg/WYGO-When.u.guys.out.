@@ -14,7 +14,8 @@ import {
   addDoc,
   arrayRemove,
   deleteDoc,
-  writeBatch
+  writeBatch,
+  runTransaction
 } from 'firebase/firestore';
 
 export interface CrewData {
@@ -114,6 +115,31 @@ export const dbService = {
     return querySnapshot.docs.map(doc => doc.data() as CrewData);
   },
 
+  async _cascadeDeleteCrewData(crewId: string, crewRef: any) {
+    const batch = writeBatch(db);
+    
+    // Read all rounds for this crew
+    const roundsRef = collection(db, 'crews', crewId, 'syncRounds');
+    const roundsSnap = await getDocs(roundsRef);
+    
+    for (const roundDoc of roundsSnap.docs) {
+      // Read all responses for this round
+      const responsesRef = collection(db, 'crews', crewId, 'syncRounds', roundDoc.id, 'responses');
+      const responsesSnap = await getDocs(responsesRef);
+      
+      // Delete responses
+      for (const responseDoc of responsesSnap.docs) {
+        batch.delete(responseDoc.ref);
+      }
+      // Delete round
+      batch.delete(roundDoc.ref);
+    }
+    
+    // Delete main crew doc
+    batch.delete(crewRef);
+    await batch.commit();
+  },
+
   async leaveCrew(crewId: string, userId: string) {
     const crewRef = doc(db, 'crews', crewId);
     const crewSnap = await getDoc(crewRef);
@@ -123,32 +149,36 @@ export const dbService = {
     const remainingMembers = crewData.memberIds.filter(id => id !== userId);
     
     if (remainingMembers.length === 0) {
-      // Last member is leaving - delete the crew
-      await deleteDoc(crewRef);
+      // Last member is leaving - fully cascade delete the crew
+      await this._cascadeDeleteCrewData(crewId, crewRef);
       return;
     }
+    
+    const batch = writeBatch(db);
     
     const updates: any = {
       memberIds: arrayRemove(userId)
     };
     
     // If owner is leaving, transfer ownership to the next member
-    if (crewData.ownerId === userId) {
+    if (crewData.ownerId === userId && remainingMembers.length > 0) {
       updates.ownerId = remainingMembers[0];
     }
     
-    await updateDoc(crewRef, updates);
+    batch.update(crewRef, updates);
+    
+    // Deep clean active round response for this user
+    if (crewData.activeSyncRoundId) {
+      const responseRef = doc(db, 'crews', crewId, 'syncRounds', crewData.activeSyncRoundId, 'responses', userId);
+      batch.delete(responseRef);
+    }
+
+    await batch.commit();
   },
 
   async deleteCrew(crewId: string) {
-    const batch = writeBatch(db);
     const crewRef = doc(db, 'crews', crewId);
-    
-    // In a real production app, we would recursively delete subcollections 
-    // (syncRounds, responses) via a Cloud Function. 
-    // For this prototype, we'll delete the main document.
-    batch.delete(crewRef);
-    await batch.commit();
+    await this._cascadeDeleteCrewData(crewId, crewRef);
   },
 
   async removeMember(crewId: string, userId: string) {
@@ -181,39 +211,39 @@ export const dbService = {
   // Sync Round Operations
   async startSyncRound(crewId: string, durationMonths: number) {
     const crewRef = doc(db, 'crews', crewId);
-    const crewSnap = await getDoc(crewRef);
-    if (!crewSnap.exists()) throw new Error("CREW_NOT_FOUND");
-    const crewData = crewSnap.data() as CrewData;
     
-    const batch = writeBatch(db);
-    
-    // 1. If there's an active round, mark it as completed
-    if (crewData.activeSyncRoundId) {
-      const oldRoundRef = doc(db, 'crews', crewId, 'syncRounds', crewData.activeSyncRoundId);
-      batch.update(oldRoundRef, { status: 'completed' });
-    }
-    
-    // 2. Create new round
-    const roundsRef = collection(db, 'crews', crewId, 'syncRounds');
-    const newRoundRef = doc(roundsRef);
-    const newRound: SyncRound = {
-      id: newRoundRef.id,
-      crewId,
-      startDate: serverTimestamp(),
-      durationMonths,
-      status: 'active',
-      createdAt: serverTimestamp()
-    };
-    
-    batch.set(newRoundRef, newRound);
-    
-    // 3. Update crew with active round ID
-    batch.update(crewRef, {
-      activeSyncRoundId: newRoundRef.id
+    return await runTransaction(db, async (transaction) => {
+      const crewSnap = await transaction.get(crewRef);
+      if (!crewSnap.exists()) throw new Error("CREW_NOT_FOUND");
+      const crewData = crewSnap.data() as CrewData;
+      
+      // If there's an active round, mark it as completed
+      if (crewData.activeSyncRoundId) {
+        const oldRoundRef = doc(db, 'crews', crewId, 'syncRounds', crewData.activeSyncRoundId);
+        transaction.update(oldRoundRef, { status: 'completed' });
+      }
+      
+      // Create new round
+      const roundsRef = collection(db, 'crews', crewId, 'syncRounds');
+      const newRoundRef = doc(roundsRef);
+      const newRound: SyncRound = {
+        id: newRoundRef.id,
+        crewId,
+        startDate: serverTimestamp(),
+        durationMonths,
+        status: 'active',
+        createdAt: serverTimestamp()
+      };
+      
+      transaction.set(newRoundRef, newRound);
+      
+      // Update crew with active round ID
+      transaction.update(crewRef, {
+        activeSyncRoundId: newRoundRef.id
+      });
+      
+      return newRound;
     });
-    
-    await batch.commit();
-    return newRound;
   },
 
   async getActiveSyncRound(crewId: string, roundId: string) {

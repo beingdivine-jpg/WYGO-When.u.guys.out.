@@ -17,21 +17,21 @@ const GoldenWindowCard = ({ window: gw, index, totalMembers, featured }: GoldenW
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className={`group relative p-10 rounded-[3rem] transition-all duration-700 bg-white/5 border border-white/10 hover:border-primary/40 flex flex-col justify-between min-h-[500px] shadow-2xl backdrop-blur-md overflow-hidden ${featured ? "ring-2 ring-primary/40 shadow-primary/10" : "hover:bg-white/[0.07]"}`}
+      className={`group relative p-6 md:p-10 rounded-[3rem] transition-all duration-700 editorial-card flex flex-col justify-between shadow-sm backdrop-blur-md overflow-hidden ${featured ? "ring-2 ring-primary shadow-sm" : "hover:border-primary/40 hover:shadow-md focus:ring-primary/40"}`}
     >
       {/* Background Accent */}
       {featured && (
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full -translate-y-12 translate-x-12" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none" />
       )}
 
-      <div className="relative z-10 flex flex-col gap-10">
+      <div className="relative z-10 flex flex-col gap-6 md:p-10">
         <div className="flex justify-between items-start">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${featured ? 'bg-primary glow-sunset animate-pulse' : 'bg-white/20'}`} />
-              <span className="text-social-label text-[8px] tracking-widest">{featured ? 'TOP_PICK' : `OPTION_0${index + 1}`}</span>
+              <div className={`w-2 h-2 rounded-full ${featured ? 'bg-primary animate-pulse' : 'bg-muted-foreground/30'}`} />
+              <span className="text-social-label text-[10px] tracking-widest text-muted-foreground">{featured ? 'TOP_PICK' : `OPTION_0${index + 1}`}</span>
             </div>
-            <div className={`px-4 py-1.5 rounded-full inline-block border text-[10px] font-bold tracking-wider ${featured ? 'bg-primary border-primary text-black' : 'bg-white/5 border-white/10 text-white/60'}`}>
+            <div className={`px-4 py-1.5 rounded-full inline-block border text-[10px] font-bold tracking-wider ${featured ? 'bg-primary border-primary text-white' : 'bg-secondary border-border text-muted-foreground'}`}>
               {gw.matchStrength}% SYNC
             </div>
           </div>
@@ -39,37 +39,37 @@ const GoldenWindowCard = ({ window: gw, index, totalMembers, featured }: GoldenW
           {gw.holidayBoost && (
             <div className="bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2 text-primary max-w-[140px]">
               <Zap className="w-3 h-3 fill-current flex-shrink-0" />
-              <span className="text-[9px] font-bold tracking-wider truncate uppercase">{gw.holidayBoost}</span>
+              <span className="text-[10px] font-bold tracking-wider truncate uppercase">{gw.holidayBoost}</span>
             </div>
           )}
         </div>
 
         <div className="space-y-3 pt-4">
-          <h3 className="text-4xl md:text-5xl font-display font-medium tracking-tight text-white group-hover:text-primary transition-colors">
+          <h3 className="text-2xl md:text-5xl font-display font-medium tracking-tight text-foreground group-hover:text-primary transition-colors">
             {gw.dateRange}
           </h3>
-          <p className="text-sm font-medium text-white/30 italic font-body lowercase">
+          <p className="text-sm font-medium text-muted-foreground italic font-body lowercase">
             {gw.dates}
           </p>
         </div>
 
-        <p className="text-sm text-white/50 leading-relaxed font-body line-clamp-3">
+        <p className="text-sm text-muted-foreground leading-relaxed font-body line-clamp-3">
           {gw.explanation}
         </p>
       </div>
 
-      <div className="relative z-10 space-y-8 pt-8 border-t border-white/5 mt-auto">
+      <div className="relative z-10 space-y-8 pt-8 border-t border-border mt-auto">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-            <div className="text-[9px] font-bold text-white/20 tracking-widest uppercase">Available</div>
+            <div className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">Available</div>
             <div className="flex items-end gap-2">
-              <span className="text-3xl font-display font-bold text-white">{freeCount}</span>
-              <span className="text-sm text-white/30 mb-1">/ {totalMembers} friends</span>
+              <span className="text-3xl font-display font-bold text-foreground">{freeCount}</span>
+              <span className="text-sm text-muted-foreground mb-1">/ {totalMembers} friends</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[9px] font-bold text-white/20 tracking-widest mb-1 uppercase">Leave Impact</div>
-            <div className={`text-xs font-bold ${gw.leaveDays ? 'text-amber-400' : 'text-primary'}`}>
+            <div className="text-[10px] font-bold text-muted-foreground tracking-widest mb-1 uppercase">Leave Impact</div>
+            <div className={`text-xs font-bold ${gw.leaveDays ? 'text-amber-500' : 'text-primary'}`}>
               {gw.leaveDays ? `${gw.leaveDays} Day Unlock` : 'No Leave Needed'}
             </div>
           </div>
@@ -82,7 +82,7 @@ const GoldenWindowCard = ({ window: gw, index, totalMembers, featured }: GoldenW
       </div>
 
       {featured && (
-        <div className="absolute top-0 left-0 w-2 h-full bg-primary/20 backdrop-blur-xl" />
+        <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
       )}
     </motion.div>
   );

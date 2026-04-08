@@ -17,7 +17,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (isLoading) {
     // Elegant loading state that matches the WYGO aesthetic
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+      <div className="min-h-[100dvh] bg-background flex flex-col items-center justify-center">
         <div className="w-8 h-8 rounded-full border-t-2 border-r-2 border-primary animate-spin" />
         <div className="mt-8 text-[10px] font-bold tracking-widest text-white/40">
           INITIALIZING_SYNC

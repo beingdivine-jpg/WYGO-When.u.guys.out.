@@ -80,6 +80,13 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { user, userProfile } = useAuth();
     const [userCrews, setUserCrews] = useState<CrewData[]>([]);
     const [activeCrew, setActiveCrew] = useState<CrewData | null>(null);
+    const activeCrewRef = useRef<CrewData | null>(null);
+
+    // Keep ref in sync with state so snapshot callbacks can read current value
+    // without needing activeCrew in their dependency arrays.
+    useEffect(() => {
+        activeCrewRef.current = activeCrew;
+    }, [activeCrew]);
     const [isLoadingCrews, setIsLoadingCrews] = useState(true);
     const [isLoadingRound, setIsLoadingRound] = useState(false);
     
@@ -110,6 +117,10 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     // Fetch crews when user logs in - REAL-TIME
+    // IMPORTANT: activeCrew is intentionally NOT in the dep array here.
+    // We use activeCrewRef to read its current value inside the callback without
+    // creating a new subscription on every crew change (which caused race conditions
+    // with leaveCrew/deleteCrew).
     useEffect(() => {
         if (!user) {
             setUserCrews([]);
@@ -127,15 +138,19 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const crews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CrewData));
             setUserCrews(crews);
             setIsLoadingCrews(false);
+
+            // Read current activeCrew from ref (no stale closure)
+            const currentActiveCrew = activeCrewRef.current;
             
             // If activeCrew was deleted/disbanded, or we were removed, clear it
-            if (activeCrew && !crews.find(c => c.id === activeCrew.id)) {
+            if (currentActiveCrew && !crews.find(c => c.id === currentActiveCrew.id)) {
                 setActiveCrew(null);
+                return;
             }
             // If activeCrew was renamed or round started, update its local copy
-            if (activeCrew) {
-                const updated = crews.find(c => c.id === activeCrew.id);
-                if (updated && JSON.stringify(updated) !== JSON.stringify(activeCrew)) {
+            if (currentActiveCrew) {
+                const updated = crews.find(c => c.id === currentActiveCrew.id);
+                if (updated && JSON.stringify(updated) !== JSON.stringify(currentActiveCrew)) {
                    setActiveCrew(updated);
                 }
             }
@@ -145,7 +160,8 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         return () => unsubscribe();
-    }, [user, activeCrew]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
 
     // 1. Listen for Members
     useEffect(() => {
@@ -268,9 +284,18 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const leaveCrew = async (crewId: string) => {
         if (!user) return;
+        // dbService.leaveCrew handles all cases:
+        //   - Regular member: removes from memberIds
+        //   - Owner with other members: removes from memberIds + transfers ownerId
+        //   - Last member: deletes the crew doc entirely
+        // After the write, the onSnapshot listener will fire and
+        // update local state (either removing the crew from userCrews,
+        // or clearing activeCrew if it was deleted). We force-clear
+        // activeCrew immediately as well so the UI navigates away instantly.
         await dbService.leaveCrew(crewId, user.uid);
+        // Optimistically clear local state — snapshot will confirm
         setUserCrews(prev => prev.filter(c => c.id !== crewId));
-        if (activeCrew?.id === crewId) {
+        if (activeCrewRef.current?.id === crewId) {
             setActiveCrew(null);
         }
     };
@@ -412,34 +437,49 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Recalculate results - this will be handled by the effect above since updatedResponses is set
     }, [user, activeCrew, activeSyncRound, userProfile]);
 
+    const contextValue = React.useMemo(() => ({
+        userCrews,
+        activeCrew,
+        setActiveCrew,
+        isLoadingCrews,
+        isLoadingRound,
+        activeSyncRound,
+        pastRounds,
+        activeResponses,
+        calculatedResults,
+        activeMembers,
+        createCrew,
+        joinCrew,
+        startNewSyncRound,
+        submitWeekendResponse,
+        syncDraft,
+        setSyncDraft,
+        clearSyncDraft,
+        leaveCrew,
+        deleteCrew,
+        removeMember,
+        cancelActiveRound,
+        renameCrew,
+        acceptMember,
+        rejectMember,
+        pendingMembers
+    }), [
+        userCrews,
+        activeCrew,
+        isLoadingCrews,
+        isLoadingRound,
+        activeSyncRound,
+        pastRounds,
+        activeResponses,
+        calculatedResults,
+        activeMembers,
+        submitWeekendResponse,
+        syncDraft,
+        pendingMembers
+    ]);
+
     return (
-        <CrewContext.Provider value={{
-            userCrews,
-            activeCrew,
-            setActiveCrew,
-            isLoadingCrews,
-            isLoadingRound,
-            activeSyncRound,
-            pastRounds,
-            activeResponses,
-            calculatedResults,
-            activeMembers,
-            createCrew,
-            joinCrew,
-            startNewSyncRound,
-            submitWeekendResponse,
-            syncDraft,
-            setSyncDraft,
-            clearSyncDraft,
-            leaveCrew,
-            deleteCrew,
-            removeMember,
-            cancelActiveRound,
-            renameCrew,
-            acceptMember,
-            rejectMember,
-            pendingMembers
-        }}>
+        <CrewContext.Provider value={contextValue}>
             {children}
         </CrewContext.Provider>
     );

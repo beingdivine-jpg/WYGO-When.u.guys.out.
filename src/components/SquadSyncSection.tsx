@@ -24,7 +24,7 @@ const LiveResultsBar = ({ results }: { results: any[] }) => {
   const best = results[0];
 
   return (
-    <div className="sticky top-0 z-50 w-full h-12 bg-black/80 backdrop-blur-xl border-b border-primary/20 flex justify-center items-center shadow-[0_4px_30px_rgba(244,86,149,0.1)]">
+    <div className="sticky top-0 z-50 w-full h-12 bg-white/90 backdrop-blur-xl border-b border-border flex justify-center items-center shadow-sm">
       <AnimatePresence mode="wait">
         <motion.div
           key={best?.id || "empty"}
@@ -41,17 +41,17 @@ const LiveResultsBar = ({ results }: { results: any[] }) => {
           {best ? (
             <>
               <Zap className="w-3.5 h-3.5 fill-primary text-primary" />
-              <span className="text-xs md:text-sm font-bold text-white tracking-wide">
+              <span className="text-xs md:text-sm font-bold text-foreground tracking-wide">
                 Best option: {best.dateRange}
               </span>
               {best.holidayBoost && (
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[#F45695]">
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-[10px] font-bold uppercase tracking-widest text-primary">
                   ✨ Long weekend
                 </span>
               )}
             </>
           ) : (
-            <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">
+            <span className="text-xs font-semibold tracking-wide text-muted-foreground">
               No strong match yet
             </span>
           )}
@@ -251,118 +251,115 @@ const SquadSyncSection = () => {
   if (!activeSyncRound) return null;
 
   return (
-    <section className="pb-48 md:pb-48 bg-background text-white min-h-screen relative selection:bg-primary/20 flex flex-col">
+    <section className="pb-28 md:pb-48 bg-background text-foreground min-h-[100dvh] relative flex flex-col">
       <LiveResultsBar results={liveResults} />
       
       <div className="flex-1 pt-4 md:pt-16 px-4 md:px-8 relative w-full overflow-clip">
-      {/* Decorative Atmospheric Glows - pointer-events-none to prevent click blocking */}
-      <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[20%] -left-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-8 md:gap-24 items-start">
+      <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row gap-6 md:p-8 md:gap-24 items-start">
         {/* Left Column: Context & Instructions — appears SECOND on mobile, first on desktop */}
-        <div className="w-full md:w-1/3 flex flex-col gap-6 md:gap-16 md:sticky md:top-32 h-fit order-2 md:order-1">
+        <div className="w-full md:w-1/3 flex flex-col gap-6 md:gap-16 md:sticky md:top-32 h-fit order-1 md:order-1">
           <div className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
+              className="inline-block px-4 py-1.5 rounded-full editorial-card"
             >
-              <span className="text-social-label text-[9px]">Live Squad Sync</span>
+              <span className="text-social-label text-[10px] text-muted-foreground">Live Squad Sync</span>
             </motion.div>
 
             <h2 className="text-4xl md:text-7xl font-display font-medium leading-tight">
               {saveStatus === 'saving' ? (
-                <>Saving <span className="text-primary italic">draft</span> markers...</>
+                <>Saving <span className="text-primary">draft</span> markers...</>
               ) : (
-                <>Mark your <span className="text-secondary italic">weekends.</span></>
+                <>Mark your <span className="text-primary">weekends.</span></>
               )}
             </h2>
 
             {isOwner && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-red-500/40 hover:text-red-500 transition-colors">
+                  <button className="flex items-center gap-2 text-xs font-semibold tracking-wide text-red-500/60 hover:text-red-500 transition-colors">
                     <XCircle className="w-3.5 h-3.5" />
                     Cancel This Sync Round
                   </button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-background border-white/10 text-white">
+                <AlertDialogContent className="bg-background border-border text-foreground">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Cancel Sync Round?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-white/60">
+                    <AlertDialogDescription className="text-muted-foreground">
                       This will stop the current sync process for the entire squad. All current markers will be archived.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Keep Round</AlertDialogCancel>
+                    <AlertDialogCancel className="bg-secondary border-border text-foreground hover:bg-secondary/70">Keep Round</AlertDialogCancel>
                     <AlertDialogAction onClick={handleCancelRound} className="bg-red-500 hover:bg-red-600 text-white font-bold">Cancel Round</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
 
-            <p className="text-base md:text-lg text-white/50 font-body leading-relaxed max-w-xs">
+            <p className="text-base md:text-lg text-muted-foreground font-body leading-relaxed max-w-xs">
               Let the crew know when you're around. We'll find the magic windows for everyone.
             </p>
 
             {/* Interaction Legend */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-sm space-y-5">
-              <div className="text-[9px] font-bold tracking-widest uppercase text-white/30">How to Sync</div>
-              <p className="text-xs text-white/50 leading-relaxed font-body">
+            <div className="editorial-card shadow-sm rounded-2xl p-6 space-y-5">
+              <div className="text-xs font-semibold tracking-wide text-muted-foreground">How to Sync</div>
+              <p className="text-xs text-muted-foreground leading-relaxed font-body">
                 Tap any weekend card to cycle your availability. 
               </p>
               
               <div className="flex flex-col gap-4 mt-2">
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-black text-primary shadow-inner flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-primary text-white shadow-inner flex items-center justify-center shrink-0">
                     <Zap className="w-4 h-4 fill-current" />
                   </div>
-                  <span className="text-sm font-medium text-white/90">Free <span className="text-white/30 text-xs ml-1 font-normal">— "I am ready."</span></span>
+                  <span className="text-sm font-medium text-foreground">Free <span className="text-muted-foreground text-xs ml-1 font-normal">— "I am ready."</span></span>
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-amber-400/20 text-amber-400 ring-1 ring-amber-400/30 flex items-center justify-center shrink-0">
-                    <span className="text-base font-display">?</span>
+                  <div className="w-8 h-8 rounded-full bg-stone-100 text-stone-500 ring-1 ring-stone-200 flex items-center justify-center shrink-0">
+                    <span className="text-xl font-display leading-[0.5]">~</span>
                   </div>
-                  <span className="text-sm font-medium text-white/90">Maybe <span className="text-white/30 text-xs ml-1 font-normal">— "Need to check."</span></span>
+                  <span className="text-sm font-medium text-foreground">Maybe <span className="text-muted-foreground text-xs ml-1 font-normal">— "Need to check."</span></span>
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-white/10 text-white shadow-xl rotate-45 flex items-center justify-center shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+                  <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                    <XCircle className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-medium text-white/90">Busy <span className="text-white/30 text-xs ml-1 font-normal">— "Count me out."</span></span>
+                  <span className="text-sm font-medium text-foreground">Busy <span className="text-muted-foreground text-xs ml-1 font-normal">— "Count me out."</span></span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-6 bg-white/5 p-8 rounded-[2rem] border border-white/10 backdrop-blur-sm shadow-xl">
-            <div className="text-xs font-bold text-white/30 tracking-widest uppercase">The Squad</div>
-            <div className="flex -space-x-3">
+          <div className="space-y-6 p-6 md:p-8 rounded-[2rem] editorial-card">
+            <div className="text-xs font-bold text-muted-foreground tracking-widest uppercase">The Squad</div>
+            <div className="flex -space-x-2">
               {activeResponses.map((r, i) => (
                 <div
                   key={r.userId}
-                  className={`w-14 h-14 rounded-full border-2 border-background bg-muted flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white/5 overflow-hidden transition-all hover:-translate-y-2 cursor-help group relative`}
+                  className={`w-10 h-10 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-xs font-bold shadow-sm ring-1 ring-black/5 overflow-hidden transition-all hover:-translate-y-1 cursor-help group relative`}
                   style={{ zIndex: 20 - i }}
                 >
-                  <span className="text-white/80">{r.displayName[0]}</span>
-                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                     <span className="text-[10px] text-white">View</span>
+                  <span className="text-foreground">{r.displayName[0]}</span>
+                  <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                     <span className="text-[10px] text-primary font-medium tracking-wide">View</span>
                   </div>
                 </div>
               ))}
               {activeResponses.length < (activeCrew?.memberIds.length || 0) && (
-                <div className="w-14 h-14 rounded-full border-2 border-dashed border-white/10 bg-transparent flex items-center justify-center text-white/20 text-xs">
+                <div className="w-10 h-10 rounded-full border-2 border-dashed border-border bg-transparent flex items-center justify-center text-muted-foreground text-xs">
                   +{(activeCrew?.memberIds.length || 0) - activeResponses.length}
                 </div>
               )}
             </div>
-            <div className="h-px w-full bg-white/5" />
+            <div className="h-px w-full bg-border" />
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-primary glow-sunset animate-pulse" />
-              <span className="text-[10px] font-bold text-white/40 tracking-widest uppercase">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
                  {activeResponses.length} / {activeCrew?.memberIds.length} Friends Responded
               </span>
             </div>
@@ -381,41 +378,43 @@ const SquadSyncSection = () => {
                 onClick={() => cycleStatus(weekend.id)}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full flex items-center justify-between p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] transition-all duration-500 group relative border shadow-2xl active:scale-95 ${
-                  status === 'free' ? 'bg-primary border-primary text-black' :
-                  status === 'maybe' ? 'bg-amber-400/20 border-amber-400/30 text-amber-200' :
-                  status === 'busy' ? 'bg-white/5 border-white/5 text-white/20' :
-                  'bg-white/[0.03] border-white/10 text-white'
+                className={`w-full flex items-center justify-between p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] transition-all duration-500 group relative active:scale-95 ${
+                  status === 'free' ? 'bg-primary border border-primary text-white shadow-md' :
+                  status === 'maybe' ? 'bg-stone-50 border border-stone-200 text-stone-600 shadow-sm' :
+                  status === 'busy' ? 'bg-slate-50 text-slate-400 border border-transparent' :
+                  'editorial-card text-foreground hover:border-border hover:shadow-md'
                 }`}
               >
-                <div className="flex items-center gap-3 md:gap-8 relative z-10 min-w-0">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-sm font-bold transition-all ${
-                    status === 'free' ? 'bg-black/10 text-black' : 
-                    status === 'maybe' ? 'bg-amber-400/20 text-amber-400' :
-                    'bg-white/5 text-white/40 group-hover:bg-white/10'
+                <div className="flex items-center gap-3 md:gap-6 md:p-8 relative z-10 min-w-0">
+                  <div className={`w-10 h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-sm font-bold transition-all flex-shrink-0 border ${
+                    status === 'free' ? 'bg-white/20 text-white border-white/20' : 
+                    status === 'maybe' ? 'bg-white text-stone-500 border-stone-200' :
+                    status === 'busy' ? 'bg-transparent text-slate-300 border-slate-200' :
+                    'bg-transparent text-muted-foreground border-border group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
                   }`}>
                     {i + 1}
                   </div>
                   <div className="flex flex-col items-start gap-1 min-w-0">
-                    <h3 className={`text-2xl md:text-4xl font-display font-medium tracking-tight ${
-                      status === 'busy' ? 'opacity-40' : 'opacity-100'
+                    <h3 className={`text-2xl md:text-3xl font-display font-medium tracking-tight whitespace-nowrap ${
+                      status === 'free' ? 'text-white' : 
+                      status === 'busy' ? 'text-slate-400' : 'text-foreground'
                     }`}>
                       {weekend.label}
                     </h3>
                     <div className="flex items-center gap-3">
                       {weekend.tag && (
-                        <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${
-                          status === 'free' ? 'bg-black/20 text-black' : 
-                          status === 'maybe' ? 'bg-amber-400/30 text-amber-400' :
-                          'bg-primary/20 text-primary'
+                        <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
+                          status === 'free' ? 'bg-white/20 text-white' : 
+                          status === 'maybe' ? 'bg-amber-400/20 text-amber-700' :
+                          'bg-primary/10 text-primary'
                         }`}>
                           {weekend.tag}
                         </div>
                       )}
                       <span className={`text-[10px] font-medium tracking-wide ${
-                        status === 'free' ? 'text-black/40' : 
-                        status === 'maybe' ? 'text-amber-400/40' :
-                        'text-white/20'
+                        status === 'free' ? 'text-white/80' : 
+                        status === 'maybe' ? 'text-amber-600/80' :
+                        'text-muted-foreground'
                       }`}>Available Window</span>
                     </div>
                   </div>
@@ -423,29 +422,28 @@ const SquadSyncSection = () => {
 
                 <div className="flex items-center gap-6 relative z-10">
                   <div className="text-right hidden sm:block">
-                    <span className={`text-[10px] font-bold tracking-widest block mb-0.5 ${
-                      status === 'free' ? 'text-black/60' : 
-                      status === 'maybe' ? 'text-amber-400/60' :
-                      'text-white/20'
+                    <span className={`text-[10px] font-bold tracking-widest uppercase block mb-0.5 ${
+                      status === 'free' ? 'text-white/80' : 
+                      status === 'maybe' ? 'text-stone-400' :
+                      status === 'busy' ? 'text-slate-300' : 'text-muted-foreground/50'
                     }`}>Status</span>
-                    <span className={`text-sm font-bold transition-all ${
-                      status === 'free' ? 'text-black' : 
-                      status === 'maybe' ? 'text-amber-400' :
-                      'text-white/40'
+                    <span className={`text-xs font-bold transition-all ${
+                      status === 'free' ? 'text-white' : 
+                      status === 'maybe' ? 'text-stone-600' :
+                      status === 'busy' ? 'text-slate-400' : 'text-muted-foreground'
                     }`}>
-                      {status === 'unknown' ? 'Tap to mark' : status.toUpperCase()}
+                      {status === 'unknown' ? <span>Tap to mark</span> : status.toUpperCase()}
                     </span>
                   </div>
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${
-                    status === 'free' ? 'bg-black text-primary shadow-inner rotate-0' :
-                    status === 'busy' ? 'bg-white/10 text-white shadow-xl rotate-45' :
-                    status === 'maybe' ? 'bg-amber-400/20 text-amber-400 shadow-md ring-1 ring-amber-400/30' :
-                    'bg-white/5 text-white/10 scale-90'
+                  <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-500 flex-shrink-0 ${
+                    status === 'free' ? 'bg-white text-primary shadow-sm' :
+                    status === 'busy' ? 'bg-transparent text-slate-300' :
+                    status === 'maybe' ? 'bg-stone-100 text-stone-500 shadow-sm ring-1 ring-stone-200' :
+                    'bg-transparent border-2 border-dashed border-border text-transparent scale-[0.85] group-hover:border-border'
                   }`}>
                     {status === 'free' && <Zap className="w-5 h-5 fill-current" />}
-                    {status === 'busy' && <div className="w-2 h-2 rounded-full bg-white/40" />}
-                    {status === 'maybe' && <span className="text-xl font-display">?</span>}
-                    {status === 'unknown' && <div className="w-1 h-1 rounded-full bg-white/20" />}
+                    {status === 'busy' && <XCircle className="w-5 h-5" />}
+                    {status === 'maybe' && <span className="text-2xl font-display leading-[0.5]">~</span>}
                   </div>
                 </div>
               </motion.button>
@@ -460,16 +458,16 @@ const SquadSyncSection = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="mt-6 flex justify-center"
               >
-                <div className="bg-black/90 backdrop-blur-md border border-white/10 px-5 py-3 rounded-full flex items-center gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                <div className="editorial-card px-5 py-3 rounded-full flex items-center gap-3 shadow-md">
                   {saveStatus === "saving" ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-white/70">Saving to Squad Sync...</span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Saving to Squad Sync...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-green-400">Locked in</span>
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-green-500">Locked in</span>
                     </>
                   )}
                 </div>
@@ -479,28 +477,6 @@ const SquadSyncSection = () => {
         </div>
       </div>
 
-      {/* View Sync Results Floater (Always visible when there is availability data, unless saving) */}
-      <AnimatePresence>
-        {saveStatus !== "saving" && Object.keys(availability).length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-8 md:bottom-12 inset-x-0 flex justify-center z-[50]"
-          >
-             <button 
-               onClick={() => {
-                  const resultsTab = document.querySelector('[data-tab="results"]') as HTMLButtonElement | null;
-                  if (resultsTab) resultsTab.click();
-               }}
-               className="bg-black/95 backdrop-blur-xl border border-primary/40 shadow-[0_10px_40px_rgba(244,86,149,0.3)] rounded-full px-8 py-4 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all pointer-events-auto cursor-pointer group hover:bg-black"
-             >
-                <Zap className="w-4 h-4 text-primary group-hover:fill-primary transition-all delay-75" />
-                <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white uppercase">View Sync Results</span>
-             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
       </div>
     </section>
   );

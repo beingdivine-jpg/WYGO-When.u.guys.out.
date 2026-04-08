@@ -109,15 +109,9 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-background relative overflow-hidden text-foreground selection:bg-primary/20 selection:text-white">
-            {/* Atmospheric Background */}
-            <div className="absolute inset-0 gradient-warm opacity-80" />
+        <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-hidden text-foreground selection:bg-primary/20">
 
-            {/* Soft Ambient Glows */}
-            <div className="absolute top-[10%] -left-[10%] w-[50vw] h-[50vw] bg-primary/10 blur-[120px] rounded-full" />
-            <div className="absolute bottom-[10%] -right-[10%] w-[40vw] h-[40vw] bg-purple-500/5 blur-[100px] rounded-full" />
-
-            <div className="flex-1 flex flex-col justify-center items-center p-8 md:p-24 relative z-10 max-w-lg mx-auto w-full">
+            <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-8 md:p-24 relative z-10 max-w-lg mx-auto w-full">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -129,18 +123,18 @@ const Login = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6"
+                            className="inline-block px-4 py-1.5 rounded-full editorial-card mb-6 shadow-sm"
                         >
-                            <span className="text-social-label text-[9px] tracking-widest">WYGO — when you guys out?</span>
+                            <span className="text-social-label text-[10px] tracking-widest text-muted-foreground">WYGO — when you guys out?</span>
                         </motion.div>
-                        <h1 className="text-4xl md:text-7xl font-display leading-tight">
+                        <h1 className="text-4xl md:text-7xl font-display leading-tight text-foreground">
                             {authMode === "signup" ? (
-                                <>Join the <br/><span className="text-primary italic font-medium">movement.</span></>
+                                <>Join the <br/><span className="text-primary font-medium">movement.</span></>
                             ) : (
-                                <>Welcome <br/><span className="text-primary italic font-medium">back.</span></>
+                                <>Welcome <br/><span className="text-primary font-medium">back.</span></>
                             )}
                         </h1>
-                        <p className="text-base text-white/50 max-w-xs mx-auto font-body leading-relaxed pt-2">
+                        <p className="text-base text-muted-foreground max-w-xs mx-auto font-body leading-relaxed pt-2">
                             {authMode === "signup" 
                                 ? "Create an account to stop the group-chat chaos."
                                 : "Log in to see when your friends are free next."}
@@ -163,13 +157,13 @@ const Login = () => {
                                             {authError ? 'Connection Error' : 'In-App Browser Detected'}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-white/60 leading-relaxed">
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
                                         {authError || (
                                             <>
                                                 Gmail and other apps block Google Sign-In. For the best experience, please tap 
-                                                <span className="text-white font-medium"> ... </span> or 
-                                                <span className="text-white font-medium"> Share </span> then 
-                                                <span className="text-white font-medium"> 'Open in Browser'</span>.
+                                                <span className="text-foreground font-medium"> ... </span> or 
+                                                <span className="text-foreground font-medium"> Share </span> then 
+                                                <span className="text-foreground font-medium"> 'Open in Browser'</span>.
                                             </>
                                         )}
                                     </p>
@@ -182,27 +176,27 @@ const Login = () => {
                             <div className="space-y-4">
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Mail className="h-5 w-5 text-white/30" />
+                                        <Mail className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                     <input
                                         type="email"
                                         placeholder="Email address"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-all backdrop-blur-sm"
+                                        className="w-full editorial-card rounded-2xl py-4 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all shadow-sm"
                                         required
                                     />
                                 </div>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Lock className="h-5 w-5 text-white/30" />
+                                        <Lock className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                     <input
                                         type="password"
                                         placeholder="Password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-all backdrop-blur-sm"
+                                        className="w-full editorial-card rounded-2xl py-4 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all shadow-sm"
                                         required
                                         minLength={6}
                                     />
@@ -216,14 +210,14 @@ const Login = () => {
                                             className="relative pt-2"
                                         >
                                             <div className="absolute inset-y-0 left-0 top-2 pl-4 flex items-center pointer-events-none">
-                                                <Lock className="h-5 w-5 text-white/30" />
+                                                <Lock className="h-5 w-5 text-muted-foreground" />
                                             </div>
                                             <input
                                                 type="password"
                                                 placeholder="Confirm Password"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                                className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-all backdrop-blur-sm"
+                                                className="w-full editorial-card rounded-2xl py-4 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all shadow-sm"
                                                 required={authMode === "signup"}
                                                 minLength={6}
                                             />
@@ -237,7 +231,7 @@ const Login = () => {
                                     <button 
                                         type="button" 
                                         onClick={handleForgotPassword}
-                                        className="text-[11px] font-bold tracking-wider text-white/30 hover:text-white transition-colors"
+                                        className="text-[11px] font-bold tracking-wider text-muted-foreground hover:text-foreground transition-colors"
                                     >
                                         Forgot Password?
                                     </button>
@@ -279,17 +273,16 @@ const Login = () => {
 
                         {/* Divider */}
                         <div className="flex items-center gap-4 py-2">
-                            <div className="h-px bg-white/10 flex-1" />
-                            <span className="text-[9px] font-bold tracking-widest text-white/20 uppercase">Or continue with</span>
-                            <div className="h-px bg-white/10 flex-1" />
+                            <div className="h-px bg-border flex-1" />
+                            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Or continue with</span>
+                            <div className="h-px bg-border flex-1" />
                         </div>
 
-                        {/* Google Button */}
                         <button
                             type="button"
                             onClick={handleGoogleLogin}
                             disabled={isLoading}
-                            className="w-full relative group flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl py-4 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                            className="w-full relative group flex items-center justify-center gap-3 bg-white hover:editorial-card rounded-2xl py-4 text-foreground shadow-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-5 h-5 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -300,12 +293,11 @@ const Login = () => {
                             <span>Google</span>
                         </button>
                         
-                        {/* Toggle Text */}
-                        <div className="pt-6 border-t border-white/5">
+                        <div className="pt-6 border-t border-border">
                             <button 
                                 onClick={toggleMode}
                                 type="button"
-                                className="text-white/40 hover:text-white text-sm font-medium transition-colors"
+                                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                             >
                                 {authMode === "login" 
                                     ? "Don't have an account? Sign up" 
@@ -319,8 +311,8 @@ const Login = () => {
 
             {/* Subtle Footer Decor */}
             <div className="absolute bottom-12 left-12 items-center gap-4 hidden md:flex">
-                <div className="w-12 h-px bg-white/20" />
-                <span className="text-[10px] font-bold text-white/20 tracking-widest">Moments First</span>
+                <div className="w-12 h-px bg-border" />
+                <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Moments First</span>
             </div>
         </div>
     );

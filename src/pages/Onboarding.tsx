@@ -39,12 +39,12 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground relative overflow-hidden selection:bg-primary/20">
+    <div className="min-h-[100dvh] flex flex-col bg-background text-foreground relative overflow-hidden selection:bg-primary/20">
       <div className="absolute inset-0 gradient-warm opacity-40" />
 
-      <div className="flex-1 flex flex-col relative z-10 max-w-2xl mx-auto w-full p-8 md:p-24 justify-center">
+      <div className="flex-1 flex flex-col relative z-10 max-w-2xl mx-auto w-full p-6 md:p-8 md:p-24 justify-center">
         {/* Nav */}
-        <div className="absolute top-12 left-8 right-8 flex justify-end">
+        <div className="absolute top-6 md:p-12 left-8 right-8 flex justify-end">
           <button
             onClick={handleSignOut}
             className="flex items-center gap-2 text-white/40 hover:text-white transition-all group"

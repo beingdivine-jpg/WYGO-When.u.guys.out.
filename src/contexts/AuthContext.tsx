@@ -29,6 +29,7 @@ export interface UserProfile {
   photoURL: string | null;
   homeCountry: string | null;
   onboardingCompleted: boolean;
+  tutorialCompleted?: boolean;
   createdAt?: any;
   updatedAt?: any;
   bio?: string;
