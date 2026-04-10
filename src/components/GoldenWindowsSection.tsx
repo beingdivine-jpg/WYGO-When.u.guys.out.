@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import GoldenWindowCard from "./GoldenWindowCard";
 import { Sparkles, ArrowRight } from "lucide-react";
@@ -26,6 +27,14 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
         overrideRound.startDate?.toDate ? overrideRound.startDate.toDate() : new Date(overrideRound.startDate)
       )
     : calculatedResults;
+  
+  // Debug logging
+  useEffect(() => {
+    if (goldenWindows) {
+      console.log('DEBUG: goldenWindows', goldenWindows);
+      console.log('DEBUG: Categories Match Count', categories.map(c => ({ title: c.title, count: goldenWindows.filter(c.filter).length })));
+    }
+  }, [goldenWindows]);
   
   const categories = [
     { title: "Perfect Moments", filter: (gw: any) => gw.matchStrength >= 90, description: "Everyone is free. No excuses." },
@@ -185,6 +194,32 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
                 </div>
               );
             })}
+
+            {/* Emergency Fallback: If hasResults is true but no categories matched (should be impossible) */}
+            {hasResults && !categories.some(cat => goldenWindows.filter(cat.filter).length > 0) && (
+              <div className="space-y-12 py-12 border-t border-white/5">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4 text-center md:text-left">
+                  <div className="space-y-2">
+                    <h3 className="text-4xl font-display font-medium tracking-tight text-foreground">
+                      All Synchronized Windows
+                    </h3>
+                    <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      Displaying all potential windows for your crew.
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:p-8">
+                  {goldenWindows.map((gw, i) => (
+                    <GoldenWindowCard 
+                      key={gw.id} 
+                      window={gw} 
+                      index={i} 
+                      totalMembers={totalMembers}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
