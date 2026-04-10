@@ -239,12 +239,6 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const unsubscribeResponses = onSnapshot(responsesRef, (snapshot) => {
             const responses = snapshot.docs.map(doc => ({ userId: doc.id, ...doc.data() } as any));
             setActiveResponses(responses);
-            
-            // Recalculate results in real-time
-            if (activeSyncRound) {
-                const results = syncEngine.calculateResults(responses, activeCrew, activeSyncRound.durationMonths);
-                setCalculatedResults(results);
-            }
             setIsLoadingRound(false);
         });
 
@@ -389,7 +383,7 @@ export const CrewProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Recalculate results whenever responses OR draft changes
     useEffect(() => {
-        if (activeCrew && activeSyncRound) {
+        if (activeCrew && activeSyncRound && activeSyncRound.startDate) {
             let responsesToCalculate = [...activeResponses];
             
             // If we have a draft, inject/overwrite it into the calculation for the current user

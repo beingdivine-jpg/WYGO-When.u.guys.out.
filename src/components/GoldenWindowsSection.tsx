@@ -28,10 +28,10 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
     : calculatedResults;
   
   const categories = [
-    { title: "Perfect Moments", filter: (gw: any) => gw.matchStrength > 90, description: "Everyone is free. No excuses." },
+    { title: "Perfect Moments", filter: (gw: any) => gw.matchStrength >= 90, description: "Everyone is free. No excuses." },
     { title: "Easy Escapes", filter: (gw: any) => (gw.leaveDays && gw.leaveDays > 0) || gw.holidayBoost, description: "Minimal effort, maximum reward." },
-    { title: "Top Recommendations", filter: (gw: any) => gw.matchStrength <= 90 && gw.matchStrength >= 60, description: "Best overlapping potential for the group." },
-    { title: "Squad Potential", filter: (gw: any) => gw.matchStrength < 60, description: "Emerging windows that need more crew input." },
+    { title: "Best Match", filter: (gw: any) => gw.matchStrength < 90 && gw.matchStrength >= 60, description: "Highly recommended overlapping windows." },
+    { title: "Squad Potential", filter: (gw: any) => gw.matchStrength < 60, description: "Emerging windows that might need more crew alignment." },
   ];
 
   const hasResults = goldenWindows.length > 0;

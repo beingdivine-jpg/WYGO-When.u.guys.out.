@@ -12,29 +12,36 @@ export const syncEngine = {
   generateWeekends(durationMonths: number, baseDate?: Date): Weekend[] {
     const weekends: Weekend[] = [];
     const startFrom = baseDate ? new Date(baseDate) : new Date();
-    startFrom.setHours(0, 0, 0, 0);
+    // Normalize to UTC midnight
+    startFrom.setUTCHours(0, 0, 0, 0);
     
-    // Start from next Friday relative to startFrom
-    let current = new Date(startFrom);
-    current.setDate(startFrom.getDate() + (5 - startFrom.getDay() + 7) % 7);
+    // Start from next Friday relative to startFrom (Friday is getUTCDay() === 5)
+    let current = new Date(startFrom.getTime());
+    current.setUTCDate(startFrom.getUTCDate() + (5 - startFrom.getUTCDay() + 7) % 7);
     
-    const endDate = new Date(startFrom);
-    endDate.setMonth(startFrom.getMonth() + durationMonths);
+    const endDate = new Date(startFrom.getTime());
+    endDate.setUTCMonth(startFrom.getUTCMonth() + durationMonths);
     
     while (current < endDate) {
-      const label = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      // Use a more stable ID: YYYY-MM-DD
-      const weekId = `w-${current.getFullYear()}-${(current.getMonth()+1).toString().padStart(2, '0')}-${current.getDate().toString().padStart(2, '0')}`;
+      // Use UTC to format labels to stay consistent
+      const label = current.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        timeZone: 'UTC' 
+      });
+      
+      // Use a UTC stable ID: w-YYYY-MM-DD
+      const weekId = `w-${current.getUTCFullYear()}-${(current.getUTCMonth()+1).toString().padStart(2, '0')}-${current.getUTCDate().toString().padStart(2, '0')}`;
       
       weekends.push({
         id: weekId,
-        label: `${label}–${new Date(current.getTime() + 2 * 24 * 60 * 60 * 1000).getDate()}`,
-        date: new Date(current),
+        label: `${label}–${new Date(current.getTime() + 2 * 24 * 60 * 60 * 1000).getUTCDate()}`,
+        date: new Date(current.getTime()),
         tag: null
       });
       
       // Move to next Friday
-      current.setDate(current.getDate() + 7);
+      current.setUTCDate(current.getUTCDate() + 7);
     }
     
     return weekends;
@@ -72,7 +79,9 @@ export const syncEngine = {
       // Scoring Logic:
       // Base: (Free*1 + Maybe*0.4) / totalMembers
       // Penalty: Busy*0.5 (We want windows with NO busy people if possible)
-      const baseScore = (freeCount * 1 + maybeCount * 0.4 - busyCount * 0.5) / memberCount;
+      // Use crew member count if available, otherwise fallback to response count
+      const scoringTotal = crew.memberIds?.length || memberCount;
+      const baseScore = (freeCount * 1 + maybeCount * 0.4 - busyCount * 0.5) / scoringTotal;
       
       // Scalable Country-Aware Holiday Detection
       let holidayBoost = 0;
@@ -132,17 +141,18 @@ export const syncEngine = {
       const finalScore = Math.max(0, Math.min(1.0, baseScore + holidayBoost));
       const matchStrength = Math.round(finalScore * 100);
 
-      if (matchStrength > 30) {
+      // Keep inclusion threshold low to show emerging windows
+      if (matchStrength > 20) {
         results.push({
           id: w.id,
           dateRange: w.label,
           dates: "Fri – Sun",
           matchStrength,
-          tags: this.generateTags(matchStrength, freeCount, memberCount, w),
+          tags: this.generateTags(matchStrength, freeCount, scoringTotal, w),
           freeMembers: freeNames,
           maybeMembers: maybeNames,
           busyMembers: busyNames,
-          explanation: this.generateExplanation(freeCount, maybeCount, memberCount, detectedHoliday),
+          explanation: this.generateExplanation(freeCount, maybeCount, scoringTotal, detectedHoliday),
           holidayBoost: detectedHoliday || undefined,
           leaveDays
         });
