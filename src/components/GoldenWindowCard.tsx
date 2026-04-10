@@ -14,9 +14,7 @@ const GoldenWindowCard = ({ window: gw, index, totalMembers, featured }: GoldenW
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      initial={{ opacity: 1, y: 0 }}
       className={`group relative p-6 md:p-10 rounded-[3rem] transition-all duration-700 editorial-card flex flex-col justify-between shadow-sm backdrop-blur-md overflow-hidden ${featured ? "ring-2 ring-primary shadow-sm" : "hover:border-primary/40 hover:shadow-md focus:ring-primary/40"}`}
     >
       {/* Background Accent */}

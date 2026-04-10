@@ -110,11 +110,7 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
 
         {/* Results with Social Rhythm */}
         {!hasResults ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-48 text-center space-y-12"
-          >
+          <div className="flex flex-col items-center justify-center py-48 text-center space-y-12">
              <div className="w-32 h-32 rounded-[2rem] editorial-card flex items-center justify-center relative group shadow-sm">
                 <Sparkles className={`w-12 h-12 ${isClashing ? "text-destructive" : isSoloCrew ? "text-muted-foreground" : "text-primary"}`} />
              </div>
@@ -156,7 +152,7 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
                   </>
                 )}
              </div>
-          </motion.div>
+          </div>
         ) : (
           <div className="space-y-20 md:space-y-40">
             {categories.map((cat, ci) => {
