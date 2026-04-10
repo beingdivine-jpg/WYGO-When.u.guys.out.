@@ -34,7 +34,7 @@ const GoldenWindowsSection = ({ overrideRound, overrideResponses, title, subtitl
     { title: "Squad Potential", filter: (gw: any) => gw.matchStrength < 60, description: "Emerging windows that might need more crew alignment." },
   ];
 
-  const hasResults = goldenWindows.length > 0;
+  const hasResults = goldenWindows && goldenWindows.length > 0;
   const maxStrength = hasResults ? Math.max(...goldenWindows.map(gw => gw.matchStrength)) : 0;
   const totalMembers = activeCrew?.memberIds.length || 0;
   const responseCount = currentResponses.length;

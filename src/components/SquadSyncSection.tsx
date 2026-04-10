@@ -97,7 +97,7 @@ const SquadSyncSection = () => {
   };
   
   // Use activeSyncRound to generate weekends
-  const weekends = activeSyncRound 
+  const weekends = (activeSyncRound && activeSyncRound.startDate) 
     ? syncEngine.generateWeekends(
         activeSyncRound.durationMonths, 
         activeSyncRound.startDate?.toDate ? activeSyncRound.startDate.toDate() : new Date(activeSyncRound.startDate)
