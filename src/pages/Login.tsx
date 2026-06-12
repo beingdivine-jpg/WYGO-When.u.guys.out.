@@ -2,8 +2,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { isInAppBrowser } from "@/lib/utils";
-import { AlertCircle, ExternalLink } from "lucide-react";
+import { AlertCircle, ExternalLink, ChevronLeft } from "lucide-react";
 
 const Login = () => {
     const { 
@@ -14,7 +15,11 @@ const Login = () => {
         authError 
     } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [authMode, setAuthMode] = useState<"login" | "signup">(
+        searchParams.get("mode") === "signup" ? "signup" : "login"
+    );
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -110,6 +115,15 @@ const Login = () => {
 
     return (
         <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-hidden text-foreground selection:bg-primary/20">
+
+            {/* Back to Welcome */}
+            <button
+                onClick={() => navigate("/welcome")}
+                className="absolute top-4 left-4 md:top-6 md:left-8 z-50 flex items-center gap-2 px-3 py-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all group"
+            >
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                <span className="text-xs font-bold tracking-wider uppercase">Back</span>
+            </button>
 
             <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-8 md:p-24 relative z-10 max-w-lg mx-auto w-full">
                 <motion.div

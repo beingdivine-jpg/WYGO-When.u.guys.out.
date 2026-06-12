@@ -8,6 +8,7 @@ import { CrewProvider } from "./contexts/CrewContext.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
+import Welcome from "./pages/Welcome.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -23,6 +24,11 @@ const App = () => (
           <BrowserRouter>
           <Routes>
             {/* Public Routes */}
+            <Route path="/welcome" element={
+              <ProtectedRoute requireAuth={false}>
+                <Welcome />
+              </ProtectedRoute>
+            } />
             <Route path="/login" element={
               <ProtectedRoute requireAuth={false}>
                 <Login />

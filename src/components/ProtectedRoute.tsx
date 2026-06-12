@@ -27,11 +27,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   const isLoginPage = location.pathname === '/login';
+  const isWelcomePage = location.pathname === '/welcome';
   const isOnboardingPage = location.pathname === '/onboarding';
 
   // If user is not authenticated and trying to access a protected route
   if (!user && requireAuth) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/welcome" state={{ from: location }} replace />;
   }
 
   // If user is authenticated but hasn't completed onboarding, force onboarding
@@ -39,8 +40,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/onboarding" replace />;
   }
 
-  // If user is fully set up and trying to access login or onboarding
-  if (user && userProfile?.onboardingCompleted && (isLoginPage || isOnboardingPage)) {
+  // If user is fully set up and trying to access login, welcome, or onboarding
+  if (user && userProfile?.onboardingCompleted && (isLoginPage || isWelcomePage || isOnboardingPage)) {
     return <Navigate to="/" replace />;
   }
 
